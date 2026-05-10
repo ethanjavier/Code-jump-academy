@@ -49,6 +49,12 @@ export const BLOCK_OPTIONS: PaletteEntry[] = [
     group: 'Acciones',
   },
   {
+    id: 'skip',
+    label: 'skip()',
+    description: 'Avanza sin pintar (celda en blanco)',
+    group: 'Acciones',
+  },
+  {
     id: 'repeat',
     label: 'Repetir',
     description: 'Repite los bloques internos',

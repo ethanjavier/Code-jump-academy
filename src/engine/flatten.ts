@@ -31,6 +31,10 @@ function walk(
       out.push({ type: 'newLine' })
       continue
     }
+    if (node.kind === 'skip') {
+      out.push({ type: 'skip' })
+      continue
+    }
     let count: number
     if (node.count.type === 'literal') {
       count = clampRepeatCount(node.count.value)

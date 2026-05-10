@@ -1,4 +1,4 @@
-import { Button, InputNumber, Segmented, Select, Tag } from 'antd'
+import { InputNumber, Segmented, Select, Tag } from 'antd'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Layers, MousePointerClick, Sparkles, Trash2 } from 'lucide-react'
 
@@ -65,13 +65,13 @@ export function BlockPalette({
                 key={b.id}
                 type="button"
                 disabled={disabled}
-                whileHover={{ scale: disabled ? 1 : 1.02 }}
-                whileTap={{ scale: disabled ? 1 : 0.98 }}
+                whileHover={{ scale: disabled ? 1 : 1.03 }}
+                whileTap={{ scale: disabled ? 1 : 0.95 }}
                 onClick={() => onPick(b.id)}
-                className="flex flex-col items-start rounded-xl border border-slate-700/80 bg-slate-900/60 px-3 py-2 text-left text-sm text-slate-100 shadow-sm transition hover:border-indigo-500/50 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex flex-col items-start rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600/35 via-violet-600/25 to-fuchsia-600/20 px-3 py-2.5 text-left text-sm text-slate-100 shadow-lg shadow-indigo-950/40 ring-1 ring-indigo-400/25 transition hover:ring-indigo-300/50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="font-mono text-xs text-indigo-300">{b.label}</span>
-                <span className="text-[11px] text-slate-400">{b.description}</span>
+                <span className="font-code text-xs font-medium text-indigo-100">{b.label}</span>
+                <span className="text-[11px] text-indigo-100/75">{b.description}</span>
               </motion.button>
             ))}
           </div>
@@ -86,7 +86,7 @@ export function EmptyWorkspaceHint() {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex min-h-[140px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-600/80 bg-slate-900/40 px-4 py-8 text-center"
+      className="flex min-h-[140px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-indigo-500/35 bg-slate-900/50 px-4 py-8 text-center"
     >
       <Sparkles className="mb-2 size-8 text-indigo-400/90" aria-hidden />
       <p className="text-sm font-medium text-slate-200">Tu código aparecerá aquí</p>
@@ -130,13 +130,20 @@ export function BlockListView({
           <motion.li
             key={node.id}
             layout
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{
+              opacity: 1,
+              scale: [0, 1.12, 1],
+            }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-            className={`rounded-lg bg-slate-900/50 ring-1 ring-slate-700/80 ${
+            transition={{
+              opacity: { duration: 0.2 },
+              scale: { type: 'spring', stiffness: 460, damping: 14 },
+              layout: { type: 'spring', stiffness: 380, damping: 28 },
+            }}
+            className={`rounded-3xl bg-gradient-to-br from-slate-900/70 to-indigo-950/50 ring-1 ring-indigo-500/25 ${
               node.kind === 'repeat' && activeInsertId === node.id
-                ? 'ring-2 ring-indigo-400/70'
+                ? 'ring-2 ring-emerald-400/60 shadow-[0_0_20px_rgba(52,211,153,0.25)]'
                 : ''
             }`}
           >
@@ -201,7 +208,7 @@ export function BlockListView({
 
               {node.kind === 'drawBox' && (
                 <>
-                  <span className="font-mono text-xs text-indigo-200">
+                  <span className="font-code text-xs text-indigo-100">
                     drawBox(&quot;{node.color}&quot;)
                   </span>
                   <span
@@ -211,7 +218,18 @@ export function BlockListView({
                 </>
               )}
               {node.kind === 'newLine' && (
-                <span className="font-mono text-xs text-indigo-200">newLine()</span>
+                <span className="font-code text-xs text-indigo-100">newLine()</span>
+              )}
+              {node.kind === 'skip' && (
+                <span className="font-code text-xs text-slate-300">
+                  skip()
+                  <span
+                    className="ml-2 inline-block rounded-md border border-dashed border-slate-500 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-400"
+                    title="Sin pintar"
+                  >
+                    vacío
+                  </span>
+                </span>
               )}
               {node.kind === 'repeat' && (
                 <div
@@ -219,7 +237,7 @@ export function BlockListView({
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-mono text-xs text-indigo-200">Repetir</span>
+                  <span className="font-code text-xs text-indigo-100">Repetir</span>
                   <Segmented
                     size="small"
                     options={[
@@ -277,18 +295,18 @@ export function BlockListView({
                 </div>
               )}
 
-              <Button
-                type="text"
-                danger
-                size="small"
-                icon={<Trash2 className="size-4" />}
+              <motion.button
+                type="button"
                 aria-label="Eliminar bloque"
+                whileTap={{ scale: 0.92 }}
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(node.id)
                 }}
-                className="ml-auto"
-              />
+                className="ml-auto rounded-2xl p-1.5 text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
+              >
+                <Trash2 className="size-4" aria-hidden />
+              </motion.button>
             </div>
             {node.kind === 'repeat' && (
               <div className="border-t border-slate-700/70 bg-slate-950/40 px-2 py-2">

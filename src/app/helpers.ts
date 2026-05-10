@@ -37,9 +37,11 @@ export function patternsMatch(actual: string[], target: string[]): boolean {
   if (actual.length !== target.length) return false
   for (let i = 0; i < actual.length; i += 1) {
     const t = target[i]
-    if (t === 'skip') continue
-    if (t === '' && actual[i] === '') continue
-    if (t === '' && actual[i] !== '') return false
+    // Huecos del objetivo: deben quedar sin pintar (usa skip() en el código).
+    if (t === 'skip' || t === '') {
+      if (actual[i] !== '') return false
+      continue
+    }
     if (actual[i] !== t) return false
   }
   return true

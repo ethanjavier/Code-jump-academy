@@ -29,6 +29,12 @@ export async function runStepsOnGrid(
     if (step.type === 'newLine') {
       row += 1
       col = 0
+    } else if (step.type === 'skip') {
+      col += 1
+      if (col >= cols) {
+        row += 1
+        col = 0
+      }
     } else {
       if (row < rows && col < cols) {
         grid[row][col] = step.color

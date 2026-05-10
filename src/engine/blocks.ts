@@ -22,6 +22,12 @@ export type NewLineBlock = {
   kind: 'newLine'
 }
 
+/** Avanza una celda a la derecha sin pintar (hueco / objetivo skip). */
+export type SkipBlock = {
+  id: string
+  kind: 'skip'
+}
+
 export type RepeatBlock = {
   id: string
   kind: 'repeat'
@@ -39,12 +45,14 @@ export type VarDeclBlock = {
 export type BlockNode =
   | DrawBoxBlock
   | NewLineBlock
+  | SkipBlock
   | RepeatBlock
   | VarDeclBlock
 
 export type FlatStep =
   | { type: 'drawBox'; color: ColorKey }
   | { type: 'newLine' }
+  | { type: 'skip' }
 
 export function clampRepeatCount(n: number): number {
   return Math.max(2, Math.min(12, Math.round(n)))
