@@ -24,7 +24,7 @@ export function MascotBubble({
       aria-live="polite"
     >
       <motion.div
-        className="relative shrink-0 drop-shadow-xl"
+        className="relative shrink-0 drop-shadow-sm"
         animate={{ y: [0, -4, 0] }}
         transition={{
           repeat: Infinity,
@@ -74,15 +74,15 @@ export function MascotBubble({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className="pointer-events-auto relative rounded-3xl border-2 bg-slate-900/95 px-4 py-3 text-sm leading-snug text-slate-100 shadow-2xl backdrop-blur-md"
+            className="pointer-events-auto relative rounded-2xl border-2 bg-white px-4 py-3 text-sm leading-snug text-slate-700 shadow-sm ring-1 ring-slate-200/80 backdrop-blur-sm"
             style={{ borderColor: stroke }}
           >
             <span
-              className="absolute -left-2 bottom-4 size-3 rotate-45 rounded-sm border-2 border-r-0 border-t-0 bg-slate-900/95"
+              className="absolute -left-2 bottom-4 size-3 rotate-45 rounded-sm border-2 border-r-0 border-t-0 bg-white/95"
               style={{ borderLeftColor: stroke, borderBottomColor: stroke }}
               aria-hidden
             />
-            <p className="relative font-display font-semibold">{message}</p>
+            <p className="relative font-display font-semibold text-slate-800">{message}</p>
           </motion.div>
         ) : null}
       </AnimatePresence>

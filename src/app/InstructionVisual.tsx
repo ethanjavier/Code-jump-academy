@@ -19,10 +19,10 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border-2 border-amber-400/30 bg-gradient-to-br from-slate-950/95 via-amber-950/25 to-indigo-950/40 p-3 shadow-lg shadow-amber-950/20 ring-1 ring-amber-300/20">
-        <p className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-amber-100">
-          <span className="inline-flex size-7 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/40 to-orange-500/30 ring-1 ring-amber-300/40">
-            <Sparkles className="size-4 text-amber-200" aria-hidden />
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ring-1 ring-slate-100 md:p-4">
+        <p className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-slate-900">
+          <span className="inline-flex size-7 items-center justify-center rounded-lg border border-amber-200 bg-amber-50">
+            <Sparkles className="size-4 text-amber-800" aria-hidden />
           </span>
           Patrón objetivo
         </p>
@@ -40,7 +40,7 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                     return (
                       <div
                         key={c}
-                        className="flex size-9 items-center justify-center rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/70 sm:size-10"
+                        className="flex size-9 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 sm:size-10"
                         title="Sin pintar"
                       >
                         <span className="font-display text-[10px] font-semibold text-slate-600">—</span>
@@ -52,7 +52,7 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                       initial={{ scale: 0.82, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.03 * idx, type: 'spring', stiffness: 420, damping: 22 }}
-                      className={`flex size-9 items-center justify-center rounded-xl border-2 border-white/25 shadow-md ring-1 ring-black/20 sm:size-10 ${COLOR_META[t as ColorKey].tailwindClass}`}
+                      className={`flex size-9 items-center justify-center rounded-lg border border-slate-200/80 shadow-sm ring-1 ring-black/5 sm:size-10 ${COLOR_META[t as ColorKey].tailwindClass}`}
                       title={COLOR_META[t as ColorKey].label}
                     />
                   )
@@ -64,8 +64,8 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
       </div>
 
       {paintOrder.length > 1 ? (
-        <div className="rounded-2xl border-2 border-cyan-400/25 bg-gradient-to-r from-slate-950/90 to-cyan-950/25 p-3 shadow-md shadow-cyan-950/25 ring-1 ring-cyan-400/15">
-          <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wider text-cyan-100">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm ring-1 ring-slate-100 md:p-4">
+          <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wider text-slate-900">
             Orden al pintar (como el cursor)
           </p>
           <div className="flex flex-wrap items-center gap-x-0.5 gap-y-1">
@@ -74,12 +74,12 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                 {n > 0 ? (
                   <span className="mx-0.5 font-display text-xs font-bold text-slate-600">→</span>
                 ) : null}
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/90 px-2 py-1 shadow-sm ring-1 ring-white/5">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm ring-1 ring-slate-100">
                   <span
-                    className={`size-4 shrink-0 rounded-md ring-1 ring-black/20 ${COLOR_META[c].dotClass}`}
+                    className={`size-4 shrink-0 rounded-md ring-1 ring-black/15 ${COLOR_META[c].dotClass}`}
                     title={COLOR_META[c].label}
                   />
-                  <span className="font-display text-[11px] font-bold tabular-nums text-cyan-100">
+                  <span className="font-display text-[11px] font-bold tabular-nums text-slate-800">
                     {n + 1}
                   </span>
                 </span>

@@ -15,6 +15,52 @@ body {
   height: 100%;
   min-height: 100dvh;
   overflow: hidden;
+  /* Root-relative URLs → Vite `public/` in dev and production */
+  cursor: url('/cursor-default.svg') 4 4, auto;
+}
+
+/* Clickable / focusable controls — distinct pointer; Ant Design uses div-based triggers */
+:is(
+    a[href],
+    button,
+    summary,
+    [role='button'],
+    [role='menuitem'],
+    [role='option'],
+    [role='tab'],
+    [role='switch'],
+    [role='link'],
+    .cursor-pointer,
+    .ant-btn,
+    .ant-select-selector,
+    .ant-picker,
+    .ant-segmented-item,
+    .ant-dropdown-menu-item,
+    .ant-tabs-tab,
+    label
+  ) {
+  cursor: url('/cursor-pointer.svg') 4 4, pointer;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  cursor: url('/cursor-pointer.svg') 4 4, pointer;
+}
+
+input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not(
+    [type='radio']
+  ),
+textarea,
+[contenteditable='true'] {
+  cursor: text;
+}
+
+:disabled,
+[disabled='true'],
+[aria-disabled='true'],
+.ant-btn-disabled,
+.ant-select-disabled .ant-select-selector {
+  cursor: not-allowed !important;
 }
 
 #root {

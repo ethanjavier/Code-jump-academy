@@ -20,10 +20,10 @@ export function CursorBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium ${
         active
-          ? 'bg-indigo-500/25 text-indigo-200 ring-1 ring-indigo-400/40'
-          : 'bg-slate-800 text-slate-400'
+          ? 'border border-indigo-200 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100'
+          : 'border border-slate-200 bg-slate-100 text-slate-600'
       }`}
     >
       <MousePointerClick className="size-3.5" aria-hidden />
@@ -52,26 +52,26 @@ export function BlockPalette({
   const orderedGroups = [...groups.entries()]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 md:space-y-5">
       {orderedGroups.map(([group, items]) => (
         <div key={group}>
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             <Layers className="size-3.5" aria-hidden />
             {group}
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {items.map((b) => (
               <motion.button
                 key={b.id}
                 type="button"
                 disabled={disabled}
-                whileHover={{ scale: disabled ? 1 : 1.03 }}
-                whileTap={{ scale: disabled ? 1 : 0.95 }}
+                whileHover={{ scale: disabled ? 1 : 1.02 }}
+                whileTap={{ scale: disabled ? 1 : 0.98 }}
                 onClick={() => onPick(b.id)}
-                className="flex flex-col items-start rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600/35 via-violet-600/25 to-fuchsia-600/20 px-3 py-2.5 text-left text-sm text-slate-100 shadow-lg shadow-indigo-950/40 ring-1 ring-indigo-400/25 transition hover:ring-indigo-300/50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex flex-col items-start rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="font-code text-xs font-medium text-indigo-100">{b.label}</span>
-                <span className="text-[11px] text-indigo-100/75">{b.description}</span>
+                <span className="font-code text-xs font-medium text-indigo-800">{b.label}</span>
+                <span className="text-[11px] text-slate-600">{b.description}</span>
               </motion.button>
             ))}
           </div>
@@ -86,11 +86,11 @@ export function EmptyWorkspaceHint() {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex min-h-[140px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-indigo-500/35 bg-slate-900/50 px-4 py-8 text-center"
+      className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center ring-1 ring-slate-100"
     >
-      <Sparkles className="mb-2 size-8 text-indigo-400/90" aria-hidden />
-      <p className="text-sm font-medium text-slate-200">Tu código aparecerá aquí</p>
-      <p className="mt-1 max-w-sm text-xs text-slate-400">
+      <Sparkles className="mb-2 size-8 text-indigo-600" aria-hidden />
+      <p className="text-sm font-medium text-slate-900">Tu código aparecerá aquí</p>
+      <p className="mt-1 max-w-sm text-xs text-slate-600">
         Arrastra desde la paleta o haz clic para construir. Las variables declaradas van al pie del
         programa; dentro de Repetir puedes repetir usando un número o un nombre de variable definido
         arriba.
@@ -124,7 +124,7 @@ export function BlockListView({
   varNameOptions: string[]
 }) {
   return (
-    <ul className={`space-y-2 ${depth > 0 ? 'border-l border-indigo-500/30 pl-3' : ''}`}>
+    <ul className={`space-y-2 ${depth > 0 ? 'border-l border-slate-200 pl-3' : ''}`}>
       <AnimatePresence initial={false}>
         {nodes.map((node, idx) => (
           <motion.li
@@ -141,9 +141,9 @@ export function BlockListView({
               scale: { type: 'spring', stiffness: 460, damping: 14 },
               layout: { type: 'spring', stiffness: 380, damping: 28 },
             }}
-            className={`rounded-3xl bg-gradient-to-br from-slate-900/70 to-indigo-950/50 ring-1 ring-indigo-500/25 ${
+            className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
               node.kind === 'repeat' && activeInsertId === node.id
-                ? 'ring-2 ring-emerald-400/60 shadow-[0_0_20px_rgba(52,211,153,0.25)]'
+                ? 'border-emerald-300 ring-2 ring-emerald-200'
                 : ''
             }`}
           >
@@ -165,7 +165,7 @@ export function BlockListView({
               }
               className={`flex flex-wrap items-center gap-2 px-3 py-2 ${
                 node.kind === 'repeat'
-                  ? 'cursor-pointer select-none hover:bg-slate-800/60'
+                  ? 'cursor-pointer select-none hover:bg-slate-50'
                   : ''
               }`}
             >
@@ -184,7 +184,7 @@ export function BlockListView({
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-mono text-xs text-emerald-200">variable</span>
+                  <span className="font-mono text-xs text-emerald-700">variable</span>
                   <Select
                     size="small"
                     className="min-w-[72px]"
@@ -208,7 +208,7 @@ export function BlockListView({
 
               {node.kind === 'drawBox' && (
                 <>
-                  <span className="font-code text-xs text-indigo-100">
+                  <span className="font-code text-xs text-indigo-800">
                     drawBox(&quot;{node.color}&quot;)
                   </span>
                   <span
@@ -218,13 +218,13 @@ export function BlockListView({
                 </>
               )}
               {node.kind === 'newLine' && (
-                <span className="font-code text-xs text-indigo-100">newLine()</span>
+                <span className="font-code text-xs text-indigo-800">newLine()</span>
               )}
               {node.kind === 'skip' && (
-                <span className="font-code text-xs text-slate-300">
+                <span className="font-code text-xs text-slate-700">
                   skip()
                   <span
-                    className="ml-2 inline-block rounded-md border border-dashed border-slate-500 bg-slate-800/80 px-1.5 py-0.5 text-[10px] text-slate-400"
+                    className="ml-2 inline-block rounded-md border border-dashed border-slate-400 bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
                     title="Sin pintar"
                   >
                     vacío
@@ -237,7 +237,7 @@ export function BlockListView({
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-code text-xs text-indigo-100">Repetir</span>
+                  <span className="font-code text-xs text-indigo-800">Repetir</span>
                   <Segmented
                     size="small"
                     options={[
@@ -303,13 +303,13 @@ export function BlockListView({
                   e.stopPropagation()
                   onRemove(node.id)
                 }}
-                className="ml-auto rounded-2xl p-1.5 text-rose-400 transition hover:bg-rose-500/15 hover:text-rose-300"
+                className="ml-auto rounded-lg p-1.5 text-rose-500 transition hover:bg-rose-50 hover:text-rose-600"
               >
                 <Trash2 className="size-4" aria-hidden />
               </motion.button>
             </div>
             {node.kind === 'repeat' && (
-              <div className="border-t border-slate-700/70 bg-slate-950/40 px-2 py-2">
+              <div className="border-t border-slate-200 bg-slate-50/80 px-2 py-2">
                 {node.children.length === 0 ? (
                   <p className="px-2 py-3 text-center text-[11px] text-slate-500">
                     Selecciona este Repetir y añade bloques desde la paleta.
