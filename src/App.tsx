@@ -346,9 +346,9 @@ function PuzzleWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <main className="grid min-h-0 w-full flex-1 grid-cols-1 gap-5 overflow-hidden px-5 py-4 sm:px-8 lg:grid-cols-3 lg:items-stretch lg:gap-6 lg:py-5 lg:auto-rows-[minmax(0,1fr)]">
+      <main className="grid min-h-0 w-full flex-1 grid-cols-1 gap-5 overflow-hidden px-5 py-4 sm:px-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,0.72fr)_minmax(0,0.88fr)] lg:items-stretch lg:gap-5 lg:py-5 lg:auto-rows-[minmax(0,1fr)]">
         {/* Columna 1: brief + lienzo */}
-        <section className="flex min-h-0 flex-col gap-3 lg:min-h-0">
+        <section className="flex min-h-0 min-w-0 flex-col gap-3 lg:min-h-0">
           <div className="shrink-0 rounded-3xl border-2 border-indigo-500/20 bg-gradient-to-br from-slate-900/80 to-indigo-950/50 p-4 shadow-xl shadow-indigo-950/40 ring-1 ring-white/5">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
@@ -357,20 +357,9 @@ function PuzzleWorkspace({
               </h2>
               <Tag color="purple">{chapterTitle}</Tag>
             </div>
-            <p className="max-h-[min(44vh,22rem)] overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-slate-300">
+            <p className="max-h-[min(52vh,26rem)] overflow-y-auto whitespace-pre-line text-sm leading-snug text-slate-300">
               {level.instruction}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-400">
-              <span>
-                Columnas:{' '}
-                <strong className="text-slate-200">{level.gridCols}</strong>
-              </span>
-              <span className="text-slate-600">·</span>
-              <span>
-                Celdas:{' '}
-                <strong className="text-slate-200">{level.targetPattern.length}</strong>
-              </span>
-            </div>
           </div>
 
           <div className="flex min-h-[220px] flex-1 flex-col rounded-3xl border-2 border-teal-500/15 bg-gradient-to-br from-slate-900/80 via-emerald-950/20 to-slate-900/80 p-4 shadow-xl shadow-black/30 ring-1 ring-emerald-400/15 lg:min-h-0">
@@ -442,10 +431,10 @@ function PuzzleWorkspace({
           </div>
         </section>
 
-        {/* Columna 2: solo esta columna hace scroll vertical del código */}
-        <section className="flex min-h-0 flex-col overflow-hidden max-lg:min-h-[260px] lg:h-full">
+        {/* Columna 2: código (franja más estrecha → más sitio para el lienzo) */}
+        <section className="flex min-h-0 min-w-0 flex-col overflow-hidden max-lg:min-h-[220px] lg:h-full">
           <motion.div
-            className="flex min-h-0 h-full max-h-full flex-1 flex-col overflow-hidden rounded-3xl border-2 border-indigo-400/25 bg-gradient-to-br from-slate-900/95 via-indigo-950/40 to-violet-950/30 p-4 shadow-2xl shadow-indigo-950/50 ring-1 ring-indigo-400/20"
+            className="flex min-h-0 h-full max-h-full min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border-2 border-indigo-400/25 bg-gradient-to-br from-slate-900/95 via-indigo-950/40 to-violet-950/30 p-3 shadow-2xl shadow-indigo-950/50 ring-1 ring-indigo-400/20 lg:p-3.5"
             animate={
               isRunning
                 ? {
@@ -554,7 +543,7 @@ function PuzzleWorkspace({
         </section>
 
         {/* Columna 3: paleta + contenedores */}
-        <section className="flex min-h-[240px] flex-col lg:min-h-0">
+        <section className="flex min-h-[240px] min-w-0 flex-col lg:min-h-0">
           <div className="flex min-h-0 flex-1 flex-col rounded-3xl border-2 border-violet-500/20 bg-gradient-to-br from-slate-900/90 to-violet-950/35 p-4 shadow-xl shadow-violet-950/40 ring-1 ring-violet-400/15">
             <div className="mb-3 shrink-0 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-base font-semibold text-white">Paleta</h2>
