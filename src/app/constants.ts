@@ -8,6 +8,21 @@ export type Meta = {
   dotClass: string
 }
 
+/** Display names for puzzle instructions when UI locale is English */
+export const COLOR_LABEL_EN: Record<ColorKey, string> = {
+  red: 'Red',
+  orange: 'Orange',
+  yellow: 'Yellow',
+  green: 'Green',
+  blue: 'Blue',
+  indigo: 'Indigo',
+  purple: 'Purple',
+}
+
+export function colorLabel(c: ColorKey, locale: 'es' | 'en'): string {
+  return locale === 'en' ? COLOR_LABEL_EN[c] : COLOR_META[c].label
+}
+
 export const COLOR_META: Record<ColorKey, Meta> = {
   red: { label: 'Rojo', tailwindClass: 'bg-red-500', dotClass: 'bg-red-500' },
   orange: {

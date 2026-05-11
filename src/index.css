@@ -15,6 +15,7 @@ body {
   height: 100%;
   min-height: 100dvh;
   overflow: hidden;
+  background-color: #020617;
   /* Root-relative URLs → Vite `public/` in dev and production */
   cursor: url('/cursor-default.svg') 4 4, auto;
 }
@@ -70,6 +71,11 @@ textarea,
   width: 100%;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Home hub: Ant Design buttons use overflow:hidden and clip multi-line text */
+.hub-root .ant-btn {
+  overflow: visible !important;
 }
 
 @layer utilities {

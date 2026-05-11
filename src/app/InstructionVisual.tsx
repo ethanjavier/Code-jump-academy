@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
+import { ListOrdered, Target } from 'lucide-react'
 
 import type { ColorKey } from '../engine/blocks'
 import { COLOR_META } from './constants'
+import { iconStroke } from './icons'
+import { useI18n } from '../i18n/I18nContext'
 
 type Props = {
   pattern: string[]
@@ -11,6 +13,7 @@ type Props = {
 
 /** Mini lienzo + franja de orden de pintado (paleta / ayuda) */
 export function InstructionVisualExample({ pattern, cols }: Props) {
+  const { t } = useI18n()
   if (cols <= 0) return null
   const rows = Math.ceil(pattern.length / cols)
   const paintOrder = pattern
@@ -19,12 +22,12 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ring-1 ring-slate-100 md:p-4">
-        <p className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-slate-900">
-          <span className="inline-flex size-7 items-center justify-center rounded-lg border border-amber-200 bg-amber-50">
-            <Sparkles className="size-4 text-amber-800" aria-hidden />
+      <div className="rounded-2xl border border-amber-500/25 bg-slate-900/80 p-3 shadow-lg shadow-black/30 ring-1 ring-amber-500/15 md:p-4">
+        <p className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-amber-100">
+          <span className="inline-flex size-7 items-center justify-center rounded-lg border border-amber-400/35 bg-amber-950/60">
+            <Target className="size-4 text-amber-300" strokeWidth={iconStroke.soft} aria-hidden />
           </span>
-          Patrón objetivo
+          {t('visual.targetPattern')}
         </p>
         <div className="flex flex-col gap-2">
           {Array.from({ length: rows }, (_, r) => (
@@ -35,15 +38,15 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
               <div className="flex flex-wrap gap-1.5">
                 {Array.from({ length: cols }, (_, c) => {
                   const idx = r * cols + c
-                  const t = pattern[idx] ?? 'skip'
-                  if (t === 'skip' || t === '')
+                  const cell = pattern[idx] ?? 'skip'
+                  if (cell === 'skip' || cell === '')
                     return (
                       <div
                         key={c}
-                        className="flex size-9 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 sm:size-10"
-                        title="Sin pintar"
+                        className="flex size-9 items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-800/80 sm:size-10"
+                        title={t('visual.unpaintedCell')}
                       >
-                        <span className="font-display text-[10px] font-semibold text-slate-600">—</span>
+                        <span className="font-display text-[10px] font-semibold text-slate-500">—</span>
                       </div>
                     )
                   return (
@@ -52,8 +55,8 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                       initial={{ scale: 0.82, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.03 * idx, type: 'spring', stiffness: 420, damping: 22 }}
-                      className={`flex size-9 items-center justify-center rounded-lg border border-slate-200/80 shadow-sm ring-1 ring-black/5 sm:size-10 ${COLOR_META[t as ColorKey].tailwindClass}`}
-                      title={COLOR_META[t as ColorKey].label}
+                      className={`flex size-9 items-center justify-center rounded-lg border border-white/15 shadow-md ring-1 ring-black/30 sm:size-10 ${COLOR_META[cell as ColorKey].tailwindClass}`}
+                      title={COLOR_META[cell as ColorKey].label}
                     />
                   )
                 })}
@@ -64,22 +67,23 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
       </div>
 
       {paintOrder.length > 1 ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm ring-1 ring-slate-100 md:p-4">
-          <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-wider text-slate-900">
-            Orden al pintar (como el cursor)
+        <div className="rounded-2xl border border-cyan-500/25 bg-slate-900/75 p-3 shadow-lg shadow-black/25 ring-1 ring-cyan-500/15 md:p-4">
+          <p className="mb-2 flex items-center gap-2 font-display text-[11px] font-bold uppercase tracking-wider text-cyan-100">
+            <ListOrdered className="size-3.5 shrink-0 text-cyan-400" strokeWidth={iconStroke.soft} aria-hidden />
+            {t('visual.paintOrder')}
           </p>
           <div className="flex flex-wrap items-center gap-x-0.5 gap-y-1">
             {paintOrder.map(({ c }, n) => (
               <span key={`paint-step-${n}`} className="flex items-center">
                 {n > 0 ? (
-                  <span className="mx-0.5 font-display text-xs font-bold text-slate-600">→</span>
+                  <span className="mx-0.5 font-display text-xs font-bold text-slate-500">→</span>
                 ) : null}
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm ring-1 ring-slate-100">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800/90 px-2 py-1 shadow-md ring-1 ring-white/5">
                   <span
-                    className={`size-4 shrink-0 rounded-md ring-1 ring-black/15 ${COLOR_META[c].dotClass}`}
+                    className={`size-4 shrink-0 rounded-md ring-1 ring-black/40 ${COLOR_META[c].dotClass}`}
                     title={COLOR_META[c].label}
                   />
-                  <span className="font-display text-[11px] font-bold tabular-nums text-slate-800">
+                  <span className="font-display text-[11px] font-bold tabular-nums text-slate-200">
                     {n + 1}
                   </span>
                 </span>

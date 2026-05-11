@@ -1,22 +1,19 @@
-import {
-  Alert,
-  Button,
-  ConfigProvider,
-  Modal,
-  Progress,
-  Select,
-  Tag,
-  theme as antdTheme,
-} from 'antd'
+import { Alert, Button, Modal, Progress, Select, Tag } from 'antd'
 import { motion } from 'framer-motion'
 import {
+  Blocks,
+  BookOpen,
+  BookOpenText,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
+  Code2,
   Eraser,
   Gamepad2,
-  Layers,
-  Map as MapIcon,
+  LayoutGrid,
+  Library,
+  ListOrdered,
   Play,
   Rocket,
   RotateCcw,
@@ -25,6 +22,7 @@ import {
   Star,
   Trophy,
   XCircle,
+  House,
 } from 'lucide-react'
 import {
   useCallback,
@@ -36,12 +34,17 @@ import {
 } from 'react'
 
 import { CAMPAIGN_CHAPTERS } from './campaign/buildCampaign'
-import type { RepeatBlock } from './engine/blocks'
-import type { ColorKey } from './engine/blocks'
-import type { BlockNode } from './engine/blocks'
-import type { CountSource } from './engine/blocks'
+import { CHAPTER_TITLES_EN } from './campaign/chapterThemes'
+import {
+  DEFAULT_VAR_DECL_INITIAL,
+  type RepeatBlock,
+  type ColorKey,
+  type BlockNode,
+  type CountSource,
+} from './engine/blocks'
 import type { Level } from './types/level'
 import { STEP_DELAY_MS, COLOR_META } from './app/constants'
+import { iconStroke } from './app/icons'
 import { InstructionVisualExample } from './app/InstructionVisual'
 import {
   BlockListView,
@@ -75,6 +78,18 @@ import {
   updateVarDecl,
 } from './app/helpers'
 import { runStepsOnGrid } from './app/interpreter'
+import { LanguageQuizModal } from './app/LanguageQuizModal'
+import { LanguagePracticeShell } from './app/LanguagePracticeShell'
+import { LearningHub } from './app/LearningHub'
+import {
+  chapterTitleForLocale,
+  loadLearningLanguages,
+  loadScreen,
+  saveScreen,
+  type AppScreen,
+} from './app/learningPreferences'
+import { primaryCodeFocus, type LearningLanguageId } from './app/learningTracks'
+import { useI18n } from './i18n/I18nContext'
 
 function collectRepeatsFromNode(n: BlockNode): RepeatBlock[] {
   if (n.kind !== 'repeat') return []
@@ -95,6 +110,8 @@ function countBlocks(nodes: BlockNode[]): number {
 type PuzzleWorkspaceProps = {
   level: Level
   chapterTitle: string
+  lessonSignature: string
+  focusLanguages: LearningLanguageId[]
   campaignHasRemainingPuzzle: boolean
   onAdvanceCampaignPuzzle: () => void
   onLessonWin: (stars: 1 | 2 | 3) => void
@@ -103,10 +120,13 @@ type PuzzleWorkspaceProps = {
 function PuzzleWorkspace({
   level,
   chapterTitle,
+  lessonSignature,
+  focusLanguages,
   campaignHasRemainingPuzzle,
   onAdvanceCampaignPuzzle,
   onLessonWin,
 }: PuzzleWorkspaceProps) {
+  const { t, locale } = useI18n()
   const abortRef = useRef<AbortController | null>(null)
   const codeScrollRef = useRef<HTMLDivElement>(null)
   const prevBlockCountRef = useRef(0)
@@ -171,12 +191,12 @@ function PuzzleWorkspace({
   const handleRun = useCallback(async () => {
     playSFX('run')
     handleStop()
-    const flat = flattenToSteps(workspace)
-    if (!flat.ok) {
+    const flat = flattenToSteps(workspace, { implicitVarNames: varNameOptions })
+    if (flat.ok === false) {
       playSFX('fail')
       setFlattenError(flat.message)
       setMascot({
-        text: 'Tu código tiene un problema: revisa variables y bloques.',
+        text: t('mascot.flattenError'),
         mood: 'sad',
       })
       return
@@ -219,20 +239,20 @@ function PuzzleWorkspace({
         setMascot({
           text:
             stars === 3
-              ? '¡Tres estrellas! ¡Primer intento y código compacto!'
+              ? t('mascot.win3')
               : stars === 2
-                ? '¡Dos estrellas! Buen uso de bloques.'
-                : '¡Una estrella! Nivel completado.',
+                ? t('mascot.win2')
+                : t('mascot.win1'),
           mood: 'happy',
         })
         setResultModal({
           open: true,
           ok: true,
           stars: starsResult,
-          title: '¡Desafío superado!',
+          title: t('modal.winTitle'),
           detail: (
-            <p className="text-sm text-slate-600">
-              Tu pintura coincide con el objetivo. Sigue con el siguiente puzzle cuando quieras.
+            <p className="text-sm text-slate-300">
+              {t('modal.winBody')}
             </p>
           ),
         })
@@ -240,26 +260,27 @@ function PuzzleWorkspace({
         playSFX('fail')
         setShakeGen((n) => n + 1)
         setMascot({
-          text: '¡Casi! Prueba otro orden o revisa los saltos de línea.',
+          text: t('mascot.fail'),
           mood: 'neutral',
         })
         setResultModal({
           open: true,
           ok: false,
           stars: 0,
-          title: 'Casi lo tienes',
+          title: t('modal.almostTitle'),
           detail: (
-            <div className="space-y-2 text-sm text-slate-600">
+            <div className="space-y-2 text-sm text-slate-300">
               <p>
-                Compara tu lienzo con el patrón: cada <span className="font-code text-indigo-700">drawBox</span>{' '}
-                pinta y avanza; usa <span className="font-code text-indigo-700">skip()</span> para dejar una celda en
-                blanco sin pintar.
+                {t('modal.failLead', {
+                  drawBox: 'drawBox()',
+                  skip: 'skip()',
+                })}
               </p>
               <Alert
                 type="info"
                 showIcon
-                message="Consejo"
-                description="Ejecuta mentalmente el código fila a fila."
+                message={t('modal.tipTitle')}
+                description={t('modal.tipBody')}
               />
             </div>
           ),
@@ -275,7 +296,9 @@ function PuzzleWorkspace({
     onLessonWin,
     rows,
     cols,
+    varNameOptions,
     workspace,
+    t,
   ])
 
   const addBlockFromPalette = useCallback(
@@ -294,7 +317,7 @@ function PuzzleWorkspace({
         }
       } else if (blockId === 'varDecl') {
         const name = varNameOptions[0] ?? 'n'
-        next = { id: createId(), kind: 'varDecl', name, initial: 3 }
+        next = { id: createId(), kind: 'varDecl', name, initial: DEFAULT_VAR_DECL_INITIAL }
       } else if (blockId.startsWith('drawBox:')) {
         const color = blockId.split(':')[1] as ColorKey
         next = { id: createId(), kind: 'drawBox', color }
@@ -344,30 +367,50 @@ function PuzzleWorkspace({
     prevBlockCountRef.current = blockCount
   }, [blockCount])
 
+  useEffect(() => {
+    const primary = primaryCodeFocus(focusLanguages)
+    const tipKey = primary ? `mascot.tip.${primary}` : 'mascot.tip.default'
+    setMascot({ text: t(tipKey), mood: 'neutral' })
+  }, [lessonSignature, focusLanguages, t])
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <main className="grid min-h-0 w-full flex-1 grid-cols-1 gap-4 overflow-hidden px-4 py-4 md:gap-5 md:px-5 md:py-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,0.72fr)_minmax(0,0.88fr)] lg:items-stretch lg:px-8 lg:auto-rows-[minmax(0,1fr)]">
         {/* Columna 1: brief + lienzo */}
         <section className="flex min-h-0 min-w-0 flex-col gap-4 lg:min-h-0">
-          <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+          <div className="shrink-0 rounded-2xl border border-indigo-500/25 bg-slate-900/70 p-4 shadow-xl shadow-black/30 ring-1 ring-white/10 backdrop-blur-sm md:p-5">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display flex items-center gap-2 text-base font-semibold text-slate-900">
-                <Sparkles className="size-5 text-amber-600" aria-hidden />
-                Instrucciones
+              <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
+                <BookOpenText
+                  className="size-5 shrink-0 text-amber-400"
+                  strokeWidth={iconStroke.soft}
+                  aria-hidden
+                />
+                {t('workspace.instructions')}
               </h2>
               <Tag color="purple">{chapterTitle}</Tag>
             </div>
-            <p className="max-h-[min(52vh,26rem)] overflow-y-auto whitespace-pre-line text-sm leading-snug text-slate-700">
-              {level.instruction}
+            <p className="max-h-[min(52vh,26rem)] overflow-y-auto whitespace-pre-line text-sm leading-snug text-slate-300">
+              {locale === 'en' ? level.instructionEn : level.instructionEs}
             </p>
           </div>
 
-          <div className="flex min-h-[220px] flex-1 flex-col rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm ring-1 ring-slate-100 md:p-5 lg:min-h-0">
+          <div className="flex min-h-[220px] flex-1 flex-col rounded-2xl border border-teal-500/20 bg-slate-900/60 p-4 shadow-xl shadow-black/25 ring-1 ring-teal-500/15 backdrop-blur-sm md:p-5 lg:min-h-0">
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-base font-semibold text-slate-900">Lienzo</h2>
+              <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
+                <LayoutGrid
+                  className="size-5 shrink-0 text-teal-400"
+                  strokeWidth={iconStroke.soft}
+                  aria-hidden
+                />
+                {t('workspace.canvas')}
+              </h2>
               <CursorBadge
                 active={isRunning}
-                label={`Fila ${cursor.row + 1}, col ${cursor.col + 1}`}
+                label={t('workspace.rowCol', {
+                  row: cursor.row + 1,
+                  col: cursor.col + 1,
+                })}
               />
             </div>
 
@@ -391,7 +434,7 @@ function PuzzleWorkspace({
                     const isCursor = cursor.row === r && cursor.col === c
                     const bgClass =
                       cell === ''
-                        ? 'border-slate-300 bg-slate-100'
+                        ? 'border-slate-600 bg-slate-800/90'
                         : `${COLOR_META[cell as ColorKey].tailwindClass} border-transparent`
 
                     return (
@@ -400,7 +443,7 @@ function PuzzleWorkspace({
                         layout
                         className={`relative flex size-14 items-center justify-center rounded-xl border-2 sm:size-16 ${
                           isCursor && isRunning
-                            ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-white'
+                            ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-950'
                             : ''
                         } ${bgClass}`}
                         animate={{
@@ -424,9 +467,8 @@ function PuzzleWorkspace({
               </div>
             </motion.div>
 
-            <p className="mt-2 shrink-0 text-center text-[11px] text-slate-600 leading-snug">
-              Rayado en la meta = hueco sin pintar. Usa{' '}
-              <span className="font-code text-slate-700">skip()</span> para avanzar sin color.
+            <p className="mt-2 shrink-0 text-center text-[11px] text-slate-400 leading-snug">
+              {t('workspace.canvasHint', { skip: t('workspace.skipToken') })}
             </p>
           </div>
         </section>
@@ -434,13 +476,19 @@ function PuzzleWorkspace({
         {/* Columna 2: código (franja más estrecha → más sitio para el lienzo) */}
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden max-lg:min-h-[220px] lg:h-full">
           <motion.div
-            className={`flex min-h-0 h-full max-h-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-white p-3 shadow-sm ring-1 ring-slate-100 md:p-4 lg:p-4 ${
-              isRunning ? 'border-emerald-300 ring-emerald-200/80' : 'border-slate-200'
+            className={`flex min-h-0 h-full max-h-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-slate-900/75 p-3 shadow-xl shadow-indigo-950/40 ring-1 ring-indigo-500/20 backdrop-blur-sm md:p-4 lg:p-4 ${
+              isRunning ? 'border-emerald-400/60 ring-emerald-400/35' : 'border-indigo-500/25'
             }`}
             animate={
               isRunning
-                ? { boxShadow: ['0 1px 2px rgb(0 0 0 / 0.05)', '0 0 0 3px rgb(52 211 153 / 0.2)', '0 1px 2px rgb(0 0 0 / 0.05)'] }
-                : { boxShadow: '0 1px 2px rgb(0 0 0 / 0.05)' }
+                ? {
+                    boxShadow: [
+                      '0 20px 40px -12px rgb(0 0 0 / 0.45)',
+                      '0 0 0 3px rgb(52 211 153 / 0.28)',
+                      '0 20px 40px -12px rgb(0 0 0 / 0.45)',
+                    ],
+                  }
+                : { boxShadow: '0 20px 40px -12px rgb(0 0 0 / 0.45)' }
             }
             transition={
               isRunning
@@ -449,24 +497,35 @@ function PuzzleWorkspace({
             }
           >
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-base font-semibold text-slate-900">Tu código</h2>
+              <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
+                <Code2
+                  className="size-5 shrink-0 text-indigo-400"
+                  strokeWidth={iconStroke.soft}
+                  aria-hidden
+                />
+                {t('workspace.yourCode')}
+              </h2>
               <div className="flex flex-wrap gap-2">
                 <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-block">
                   <Button
-                    className="h-10 rounded-xl border border-amber-200 bg-amber-50 font-display font-semibold text-amber-900 shadow-none hover:!border-amber-300 hover:!bg-amber-100 hover:!text-amber-950"
-                    icon={<Eraser className="size-4 text-amber-700" />}
+                    className="h-10 rounded-xl border border-amber-500/35 bg-amber-950/40 font-display font-semibold text-amber-100 shadow-none hover:!border-amber-400/55 hover:!bg-amber-900/55 hover:!text-white"
+                    icon={
+                      <Eraser className="size-4 text-amber-400" strokeWidth={iconStroke.medium} aria-hidden />
+                    }
                     onClick={clearCode}
                   >
-                    Limpiar
+                    {t('workspace.clear')}
                   </Button>
                 </motion.span>
                 <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-block">
                   <Button
-                    className="h-10 rounded-xl border border-teal-200 bg-teal-50 font-display font-semibold text-teal-900 shadow-none hover:!border-teal-300 hover:!bg-teal-100 hover:!text-teal-950"
-                    icon={<RotateCcw className="size-4 text-teal-700" />}
+                    className="h-10 rounded-xl border border-teal-500/35 bg-teal-950/35 font-display font-semibold text-teal-100 shadow-none hover:!border-teal-400/50 hover:!bg-teal-900/45 hover:!text-white"
+                    icon={
+                      <RotateCcw className="size-4 text-teal-400" strokeWidth={iconStroke.medium} aria-hidden />
+                    }
                     onClick={resetCanvas}
                   >
-                    Lienzo
+                    {t('workspace.resetCanvas')}
                   </Button>
                 </motion.span>
                 <motion.span
@@ -476,12 +535,12 @@ function PuzzleWorkspace({
                 >
                   <Button
                     type="primary"
-                    className="relative h-11 overflow-hidden rounded-xl border-0 bg-emerald-600 px-5 font-display text-base font-bold shadow-sm ring-1 ring-emerald-700/15 hover:!bg-emerald-500"
-                    icon={<Play className="size-4 fill-current" />}
+                    className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-5 font-display text-base font-bold shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-400/25 hover:!from-emerald-500 hover:!to-teal-500"
+                    icon={<Play className="size-4 fill-current" strokeWidth={iconStroke.medium} aria-hidden />}
                     loading={isRunning}
                     onClick={() => void handleRun()}
                   >
-                    Ejecutar
+                    {t('workspace.run')}
                   </Button>
                 </motion.span>
               </div>
@@ -492,24 +551,24 @@ function PuzzleWorkspace({
                 className="mb-3 shrink-0"
                 type="warning"
                 showIcon
-                message="Tu programa tiene un problema"
+                message={t('workspace.programProblem')}
                 description={flattenError}
                 closable
                 onClose={() => setFlattenError(null)}
               />
             ) : null}
 
-            <div className="mb-3 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-              <span className="font-semibold text-indigo-700">Destino:</span>{' '}
+            <div className="mb-3 shrink-0 rounded-lg border border-slate-600/80 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
+              <span className="font-semibold text-indigo-300">{t('workspace.destination')}</span>{' '}
               {insertTarget === 'root' ? (
-                'Programa principal'
+                t('workspace.mainProgram')
               ) : (
                 <button
                   type="button"
-                  className="font-code text-amber-700 underline-offset-2 hover:underline"
+                  className="font-code text-amber-400 underline-offset-2 hover:text-amber-300 hover:underline"
                   onClick={() => setInsertTarget('root')}
                 >
-                  Dentro del Repetir (volver a raíz)
+                  {t('workspace.insideRepeat')}
                 </button>
               )}
             </div>
@@ -538,20 +597,27 @@ function PuzzleWorkspace({
 
         {/* Columna 3: paleta + contenedores */}
         <section className="flex min-h-[240px] min-w-0 flex-col lg:min-h-0">
-          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-violet-500/25 bg-slate-900/70 p-4 shadow-xl shadow-violet-950/35 ring-1 ring-violet-500/15 backdrop-blur-sm md:p-5">
             <div className="mb-3 shrink-0 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-base font-semibold text-slate-900">Paleta</h2>
-              <span className="text-[11px] text-slate-500">Clic en Repetir para anidar</span>
+              <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
+                <Blocks
+                  className="size-5 shrink-0 text-violet-400"
+                  strokeWidth={iconStroke.soft}
+                  aria-hidden
+                />
+                {t('workspace.palette')}
+              </h2>
+              <span className="text-[11px] text-slate-400">{t('workspace.paletteHint')}</span>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
               <BlockPalette allowed={allowedSet} disabled={isRunning} onPick={addBlockFromPalette} />
-              <div className="mt-5 border-t border-slate-200 pt-4">
+              <div className="mt-5 border-t border-white/10 pt-4">
                 <InstructionVisualExample pattern={level.targetPattern} cols={level.gridCols} />
               </div>
             </div>
-            <div className="mt-4 shrink-0 flex flex-wrap gap-2 border-t border-slate-200 pt-3">
+            <div className="mt-4 shrink-0 flex flex-wrap gap-2 border-t border-white/10 pt-3">
               <span className="w-full text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Contenedor activo
+                {t('workspace.activeContainer')}
               </span>
               <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.96 }} className="inline-block">
                 <Button
@@ -560,13 +626,13 @@ function PuzzleWorkspace({
                   type={insertTarget === 'root' ? 'primary' : 'default'}
                   className={
                     insertTarget === 'root'
-                      ? '!rounded-full !border !border-indigo-600 !bg-indigo-600 !font-display !font-bold !text-white !shadow-none hover:!border-indigo-500 hover:!bg-indigo-500'
-                      : '!rounded-full !border !border-slate-300 !bg-slate-50 !font-display !font-semibold !text-slate-700 hover:!border-slate-400 hover:!bg-slate-100'
+                      ? '!rounded-full !border !border-indigo-500 !bg-indigo-600 !font-display !font-bold !text-white !shadow-none hover:!border-indigo-400 hover:!bg-indigo-500'
+                      : '!rounded-full !border !border-slate-600 !bg-slate-800/90 !font-display !font-semibold !text-slate-200 hover:!border-slate-500 hover:!bg-slate-700'
                   }
                   onClick={() => setInsertTarget('root')}
                   disabled={isRunning}
                 >
-                  Raíz
+                  {t('workspace.root')}
                 </Button>
               </motion.span>
               {repeatTargets.map((rep) => (
@@ -582,13 +648,15 @@ function PuzzleWorkspace({
                     type={insertTarget === rep.id ? 'primary' : 'default'}
                     className={
                       insertTarget === rep.id
-                        ? '!rounded-full !border !border-fuchsia-600 !bg-fuchsia-600 !font-display !font-bold !text-white !shadow-none hover:!border-fuchsia-500 hover:!bg-fuchsia-500'
-                        : '!rounded-full !border !border-slate-300 !bg-slate-50 !font-display !font-semibold !text-slate-700 hover:!border-slate-400 hover:!bg-slate-100'
+                        ? '!rounded-full !border !border-fuchsia-500 !bg-fuchsia-600 !font-display !font-bold !text-white !shadow-none hover:!border-fuchsia-400 hover:!bg-fuchsia-500'
+                        : '!rounded-full !border !border-slate-600 !bg-slate-800/90 !font-display !font-semibold !text-slate-200 hover:!border-slate-500 hover:!bg-slate-700'
                     }
                     onClick={() => setInsertTarget(rep.id)}
                     disabled={isRunning}
                   >
-                    Repetir {formatCountLabel(rep.count)}
+                    {t('workspace.repeatWith', {
+                      label: formatCountLabel(rep.count),
+                    })}
                   </Button>
                 </motion.span>
               ))}
@@ -607,21 +675,22 @@ function PuzzleWorkspace({
         open={resultModal.open}
         onCancel={() => setResultModal((m) => ({ ...m, open: false }))}
         footer={
-          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:justify-end md:px-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-white/10 bg-slate-950/95 px-5 py-4 sm:justify-end md:px-6">
             <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-flex max-w-full min-w-0">
               <Button
-                className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border border-slate-300 bg-white px-5 py-3 font-display font-bold text-slate-800 shadow-sm hover:!border-amber-300 hover:!bg-amber-50"
+                className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border border-slate-600 bg-slate-900 px-5 py-3 font-display font-bold text-slate-100 shadow-lg hover:!border-amber-500/50 hover:!bg-slate-800"
                 onClick={() => setResultModal((m) => ({ ...m, open: false }))}
               >
                 <span className="flex w-full min-w-0 items-start gap-3 text-left">
                   <Gamepad2
-                    className="mt-0.5 size-4 shrink-0 text-amber-600 group-hover:text-amber-700"
+                    className="mt-0.5 size-4 shrink-0 text-amber-400 group-hover:text-amber-300"
+                    strokeWidth={iconStroke.medium}
                     aria-hidden
                   />
                   <span className="flex min-w-0 flex-col gap-1.5">
-                    <span className="text-sm leading-snug">Seguir practicando</span>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 group-hover:text-slate-600">
-                      Reintentar este nivel
+                    <span className="text-sm leading-snug">{t('modal.keepPracticing')}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 group-hover:text-slate-400">
+                      {t('modal.retryLevel')}
                     </span>
                   </span>
                 </span>
@@ -631,7 +700,7 @@ function PuzzleWorkspace({
               <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-flex max-w-full min-w-0">
                 <Button
                   type="primary"
-                  className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border-0 bg-violet-600 px-6 py-3 font-display font-bold text-white shadow-sm ring-1 ring-violet-900/10 hover:!bg-violet-500"
+                  className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3 font-display font-bold text-white shadow-lg ring-1 ring-white/10 hover:!from-violet-500 hover:!to-fuchsia-500"
                   onClick={() => {
                     setResultModal((m) => ({ ...m, open: false }))
                     onAdvanceCampaignPuzzle()
@@ -639,14 +708,14 @@ function PuzzleWorkspace({
                 >
                   <span className="flex w-full min-w-0 flex-col gap-1.5 text-left text-white">
                     <span className="flex min-w-0 items-center gap-3">
-                      <Trophy className="size-4 shrink-0 text-amber-200" aria-hidden />
-                      <span className="min-w-0 flex-1 text-sm leading-tight">Siguiente puzzle</span>
-                      <Rocket className="size-4 shrink-0 text-white/90" aria-hidden />
+                      <Trophy className="size-4 shrink-0 text-amber-200" strokeWidth={iconStroke.medium} aria-hidden />
+                      <span className="min-w-0 flex-1 text-sm leading-tight">{t('modal.nextPuzzle')}</span>
+                      <Rocket className="size-4 shrink-0 text-white/90" strokeWidth={iconStroke.medium} aria-hidden />
                     </span>
                     <span className="flex min-w-0 items-center gap-2">
-                      <Sparkles className="size-3 shrink-0 text-amber-200" aria-hidden />
+                      <Sparkles className="size-3.5 shrink-0 text-amber-200" strokeWidth={iconStroke.soft} aria-hidden />
                       <span className="min-w-0 text-[10px] font-semibold uppercase tracking-wide text-white/85">
-                        Nuevo reto + XP
+                        {t('modal.newChallengeXp')}
                       </span>
                     </span>
                   </span>
@@ -662,11 +731,13 @@ function PuzzleWorkspace({
             padding: 0,
             overflow: 'hidden',
             borderRadius: 16,
-            border: '1px solid rgb(226 232 240)',
-            background: 'rgb(255 255 255)',
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
+            border: '1px solid rgb(71 85 105 / 0.55)',
+            background:
+              'linear-gradient(165deg, rgb(15 23 42 / 0.98) 0%, rgb(30 27 75 / 0.95) 45%, rgb(15 23 42 / 0.99) 100%)',
+            boxShadow:
+              '0 25px 50px -12px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06) inset',
           },
-          mask: { backgroundColor: 'rgba(15, 23, 42, 0.35)' },
+          mask: { backgroundColor: 'rgba(2, 6, 23, 0.72)' },
           footer: { margin: 0, padding: 0, border: 'none', background: 'transparent' },
         }}
       >
@@ -684,13 +755,21 @@ function PuzzleWorkspace({
                 }`}
               >
                 {resultModal.ok ? (
-                  <CheckCircle2 className="size-8 text-white drop-shadow" aria-hidden />
+                  <CheckCircle2
+                    className="size-8 text-white drop-shadow"
+                    strokeWidth={iconStroke.strong}
+                    aria-hidden
+                  />
                 ) : (
-                  <XCircle className="size-8 text-white drop-shadow" aria-hidden />
+                  <XCircle
+                    className="size-8 text-white drop-shadow"
+                    strokeWidth={iconStroke.strong}
+                    aria-hidden
+                  />
                 )}
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
-                <p className="font-display text-xl font-bold tracking-tight text-slate-900">
+                <p className="font-display text-xl font-bold tracking-tight text-transparent [background-clip:text] bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-indigo-200">
                   {resultModal.title}
                 </p>
               </div>
@@ -708,7 +787,7 @@ function PuzzleWorkspace({
                       className={`size-12 ${
                         i <= resultModal.stars
                           ? 'fill-amber-400 stroke-amber-300 text-amber-500'
-                          : 'fill-none stroke-slate-300 text-slate-300'
+                          : 'fill-none stroke-slate-600 text-slate-600'
                       }`}
                       strokeWidth={i <= resultModal.stars ? 0 : 1.5}
                     />
@@ -716,7 +795,7 @@ function PuzzleWorkspace({
                 ))}
               </div>
             ) : null}
-            <div className="text-sm leading-relaxed text-slate-600">{resultModal.detail}</div>
+            <div className="text-sm leading-relaxed text-slate-300">{resultModal.detail}</div>
           </div>
         </motion.div>
       </Modal>
@@ -724,19 +803,42 @@ function PuzzleWorkspace({
   )
 }
 
-export default function App() {
-  const [chapterIndex, setChapterIndex] = useState(0)
-  const [puzzleIndex, setPuzzleIndex] = useState(0)
-  const [gameProgress, setGameProgress] = useState<GameProgress>(() => loadProgress())
+function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: () => void }) {
+  const { t, locale, setLocale } = useI18n()
+  const [learningLanguages] = useState<LearningLanguageId[]>(() => loadLearningLanguages())
+  const [quizOpen, setQuizOpen] = useState(false)
+  const showLanguagePractice = useMemo(
+    () => learningLanguages.some((id) => id !== 'blocks'),
+    [learningLanguages],
+  )
+  const [progress, setProgress] = useState<GameProgress>(() => loadProgress())
+
+  const chapterIndex = progress.chapterIndex
+  const puzzleIndex = progress.puzzleIndex
 
   const chapter = CAMPAIGN_CHAPTERS[chapterIndex]!
   const level = chapter.puzzles[puzzleIndex]!
 
-  useEffect(() => {
-    saveProgress(gameProgress)
-  }, [gameProgress])
+  const chapterDisplayTitle = useMemo(
+    () => chapterTitleForLocale(chapter.title, CHAPTER_TITLES_EN, chapterIndex, locale),
+    [chapter.title, chapterIndex, locale],
+  )
 
-  const xpBar = useMemo(() => getXpBar(gameProgress.xp), [gameProgress.xp])
+  const difficultyLabel = useMemo(() => {
+    const map = {
+      Fácil: 'easy',
+      Normal: 'normal',
+      Avanzado: 'hard',
+    } as const
+    const key = map[level.difficulty as keyof typeof map]
+    return t(`difficulty.${key}`)
+  }, [level.difficulty, t])
+
+  useEffect(() => {
+    saveProgress(progress)
+  }, [progress])
+
+  const xpBar = useMemo(() => getXpBar(progress.xp), [progress.xp])
 
   const campaignHasRemainingPuzzle =
     puzzleIndex < chapter.puzzles.length - 1 ||
@@ -749,83 +851,106 @@ export default function App() {
   }, [chapter.puzzles.length, puzzleIndex])
 
   const goNextCampaignPuzzle = useCallback(() => {
-    if (puzzleIndex < chapter.puzzles.length - 1) {
-      setPuzzleIndex((i) => i + 1)
-    } else if (chapterIndex < CAMPAIGN_CHAPTERS.length - 1) {
-      setChapterIndex((c) => c + 1)
-      setPuzzleIndex(0)
-    }
-  }, [chapter.puzzles.length, chapterIndex, puzzleIndex])
-
-  const setChapterSafe = useCallback((next: number) => {
-    setChapterIndex(Math.max(0, Math.min(CAMPAIGN_CHAPTERS.length - 1, next)))
-    setPuzzleIndex(0)
+    setProgress((p) => {
+      const ch = CAMPAIGN_CHAPTERS[p.chapterIndex]!
+      if (p.puzzleIndex < ch.puzzles.length - 1) {
+        return { ...p, puzzleIndex: p.puzzleIndex + 1 }
+      }
+      if (p.chapterIndex < CAMPAIGN_CHAPTERS.length - 1) {
+        return { ...p, chapterIndex: p.chapterIndex + 1, puzzleIndex: 0 }
+      }
+      return p
+    })
   }, [])
 
-  const adjustPuzzle = useCallback(
-    (delta: number) => {
-      const next = puzzleIndex + delta
-      const maxIndex = chapter.puzzles.length - 1
-      setPuzzleIndex(Math.max(0, Math.min(maxIndex, next)))
-    },
-    [chapter.puzzles.length, puzzleIndex],
-  )
+  const setChapterSafe = useCallback((next: number) => {
+    const chapterIdx = Math.max(0, Math.min(CAMPAIGN_CHAPTERS.length - 1, next))
+    setProgress((p) => ({ ...p, chapterIndex: chapterIdx, puzzleIndex: 0 }))
+  }, [])
+
+  const adjustPuzzle = useCallback((delta: number) => {
+    setProgress((p) => {
+      const ch = CAMPAIGN_CHAPTERS[p.chapterIndex]!
+      const maxIndex = ch.puzzles.length - 1
+      const next = p.puzzleIndex + delta
+      return {
+        ...p,
+        puzzleIndex: Math.max(0, Math.min(maxIndex, next)),
+      }
+    })
+  }, [])
 
   const lessonKey = `${chapterIndex}:${puzzleIndex}`
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: antdTheme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#6366f1',
-          borderRadiusLG: 18,
-          fontFamily:
-            "'Quicksand', ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-        },
-      }}
-    >
-      <div className="font-display flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-50 text-slate-900">
-        <header className="shrink-0 border-b border-slate-200 bg-white shadow-sm">
+      <div className="font-display relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-950 text-slate-100">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-indigo-950/90 via-slate-950 to-[#0b1020]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_110%_70%_at_50%_-5%,rgba(99,102,241,0.28),transparent_55%)]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute bottom-0 right-0 z-0 h-1/2 w-1/2 bg-[radial-gradient(circle_at_80%_100%,rgba(168,85,247,0.12),transparent_55%)]"
+          aria-hidden
+        />
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+        <header className="shrink-0 border-b border-white/10 bg-slate-950/75 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.45)] backdrop-blur-md">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6 md:py-3.5">
-            <div className="flex min-w-0 shrink-0 items-center gap-2">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-indigo-700/20 bg-indigo-600 shadow-sm ring-1 ring-indigo-500/20">
-                <SquareCode className="size-[22px] text-white" aria-hidden />
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                type="text"
+                className="font-display font-semibold text-slate-300 hover:!bg-white/10 hover:!text-white"
+                icon={<House className="size-4" strokeWidth={iconStroke.medium} aria-hidden />}
+                onClick={onHome}
+              >
+                {t('nav.home')}
+              </Button>
+            </div>
+            <div className="flex min-w-0 shrink-0 items-center gap-2 border-l border-white/10 pl-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/30 bg-gradient-to-br from-indigo-600 to-violet-700 shadow-lg shadow-indigo-950/50 ring-1 ring-white/15">
+                <SquareCode
+                  className="size-[22px] text-white"
+                  strokeWidth={iconStroke.strong}
+                  aria-hidden
+                />
               </div>
               <div className="min-w-0 leading-tight">
-                <p className="text-[10px] uppercase tracking-wide text-indigo-600">
-                  CodeJump Academy
+                <p className="text-[10px] uppercase tracking-wide text-indigo-300/95">
+                  {t('header.tagline')}
                 </p>
-                <h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
-                  Aprende código con bloques
+                <h1 className="truncate text-sm font-semibold text-white sm:text-base">
+                  {t('header.title')}
                 </h1>
               </div>
             </div>
 
-            <div className="flex min-w-[140px] max-w-[180px] flex-col gap-1 border-l border-slate-200 pl-3 sm:max-w-[220px]">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                XP · Nv. {xpBar.level}
+            <div className="flex min-w-[140px] max-w-[180px] flex-col gap-1 border-l border-white/10 pl-3 sm:max-w-[220px]">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-300/95">
+                {t('header.xp', { level: xpBar.level })}
               </span>
               <Progress
                 percent={xpBar.segmentPercent}
                 size="small"
                 showInfo={false}
                 strokeColor={{ from: '#fbbf24', to: '#f97316' }}
-                trailColor="rgba(226,232,240,0.95)"
+                trailColor="rgba(51,65,85,0.85)"
               />
             </div>
 
             <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-1.5 sm:gap-x-4">
               <div className="flex max-w-full items-center gap-1.5">
-                <MapIcon className="size-3.5 shrink-0 text-indigo-600" aria-hidden />
-                <span className="hidden text-[11px] text-slate-600 sm:inline">Capítulo</span>
+                <Library className="size-3.5 shrink-0 text-indigo-400" strokeWidth={iconStroke.medium} aria-hidden />
+                <span className="hidden text-[11px] text-slate-400 sm:inline">{t('header.chapter')}</span>
                 <Select
                   size="small"
                   className="min-w-[160px] max-w-[min(100vw-12rem,280px)] sm:min-w-[200px]"
                   value={chapterIndex}
                   options={CAMPAIGN_CHAPTERS.map((c) => ({
                     value: c.index,
-                    label: `${c.title} · ${c.puzzles.length}`,
+                    label: `${chapterTitleForLocale(c.title, CHAPTER_TITLES_EN, c.index, locale)} · ${c.puzzles.length}`,
                   }))}
                   onChange={(v) => {
                     const next = typeof v === 'number' ? v : Number(v)
@@ -834,14 +959,14 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+              <div className="flex items-center gap-1 border-l border-white/10 pl-3">
                 <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
                   <Button
                     size="small"
                     shape="round"
-                    className="border-indigo-300 bg-indigo-50 font-display font-semibold text-indigo-800 hover:!border-indigo-400 hover:!text-indigo-950"
-                    aria-label="Puzzle anterior"
-                    icon={<ChevronLeft className="size-3.5" />}
+                    className="border-indigo-500/45 bg-indigo-950/55 font-display font-semibold text-indigo-100 hover:!border-indigo-400/70 hover:!bg-indigo-900/60 hover:!text-white"
+                    aria-label={t('header.prevPuzzle')}
+                    icon={<ChevronLeft className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
                     onClick={() => adjustPuzzle(-1)}
                     disabled={puzzleIndex <= 0}
                   />
@@ -853,25 +978,27 @@ export default function App() {
                   popupMatchSelectWidth={false}
                   options={chapter.puzzles.map((_, i: number) => ({
                     value: i,
-                    label: `Puzzle ${String(i + 1).padStart(2, '0')}`,
+                    label: t('header.puzzleOption', {
+                      num: String(i + 1).padStart(2, '0'),
+                    }),
                   }))}
-                  onChange={(v) => setPuzzleIndex(Number(v))}
+                  onChange={(v) => setProgress((p) => ({ ...p, puzzleIndex: Number(v) }))}
                 />
                 <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
                   <Button
                     size="small"
                     shape="round"
-                    className="border-fuchsia-300 bg-fuchsia-50 font-display font-semibold text-fuchsia-800 hover:!border-fuchsia-400 hover:!text-fuchsia-950"
-                    aria-label="Siguiente puzzle"
-                    icon={<ChevronRight className="size-3.5" />}
+                    className="border-fuchsia-500/45 bg-fuchsia-950/45 font-display font-semibold text-fuchsia-100 hover:!border-fuchsia-400/70 hover:!bg-fuchsia-900/55 hover:!text-white"
+                    aria-label={t('header.nextPuzzle')}
+                    icon={<ChevronRight className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
                     onClick={() => adjustPuzzle(1)}
                     disabled={puzzleIndex >= chapter.puzzles.length - 1}
                   />
                 </motion.span>
               </div>
 
-              <div className="flex min-w-[140px] max-w-[200px] flex-1 items-center gap-2 border-l border-slate-200 pl-3 sm:min-w-[160px] sm:max-w-none sm:flex-none">
-                <Layers className="size-3.5 shrink-0 text-slate-500" aria-hidden />
+              <div className="flex min-w-[140px] max-w-[200px] flex-1 items-center gap-2 border-l border-white/10 pl-3 sm:min-w-[160px] sm:max-w-none sm:flex-none">
+                <ListOrdered className="size-3.5 shrink-0 text-slate-500" strokeWidth={iconStroke.medium} aria-hidden />
                 <div className="min-w-0 flex-1 pt-0.5">
                   <Progress
                     percent={progressPercent}
@@ -880,12 +1007,60 @@ export default function App() {
                     strokeColor="#818cf8"
                   />
                 </div>
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-600">
+                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">
                   {puzzleIndex + 1}/{chapter.puzzles.length}
                 </span>
-                <Tag className="m-0 shrink-0 border border-slate-300 px-1.5 py-0 text-[10px] leading-tight">
-                  {level.difficulty}
+                <Tag className="m-0 shrink-0 border border-slate-600/70 px-1.5 py-0 text-[10px] leading-tight text-slate-200">
+                  {difficultyLabel}
                 </Tag>
+              </div>
+
+              <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 border-t border-white/5 pt-2 sm:w-auto sm:border-t-0 sm:pt-0 lg:border-l lg:border-white/10 lg:pl-3">
+                {showLanguagePractice ? (
+                  <Button
+                    type="text"
+                    size="small"
+                    className="font-display text-[11px] font-semibold text-sky-200 hover:!bg-white/10 hover:!text-white"
+                    icon={<BookOpen className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
+                    onClick={onPractice}
+                  >
+                    {t('header.languagePractice')}
+                  </Button>
+                ) : null}
+                <Button
+                  type="text"
+                  size="small"
+                  className="font-display text-[11px] font-semibold text-indigo-200 hover:!bg-white/10 hover:!text-white"
+                  icon={<ClipboardCheck className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
+                  onClick={() => setQuizOpen(true)}
+                >
+                  {t('header.trackQuiz')}
+                </Button>
+                <span className="text-[10px] uppercase tracking-wide text-slate-500">UI</span>
+                <div className="flex rounded-lg border border-white/10 bg-slate-900/90 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setLocale('en')}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
+                      locale === 'en'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {t('locale.en')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocale('es')}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
+                      locale === 'es'
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {t('locale.es')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -894,18 +1069,59 @@ export default function App() {
         <PuzzleWorkspace
           key={lessonKey}
           level={level}
-          chapterTitle={chapter.title}
+          chapterTitle={chapterDisplayTitle}
+          lessonSignature={lessonKey}
+          focusLanguages={learningLanguages}
           campaignHasRemainingPuzzle={campaignHasRemainingPuzzle}
           onAdvanceCampaignPuzzle={goNextCampaignPuzzle}
           onLessonWin={(stars) => {
-            setGameProgress((g) => mergeWin(g, lessonKey, stars))
+            setProgress((g) => mergeWin(g, lessonKey, stars))
           }}
         />
 
-        <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-4 text-center text-[11px] text-slate-600 md:px-8">
-          CodeJump Academy · inspirado en Grasshopper · React + Vite + Tailwind + Ant Design
+        <footer className="shrink-0 border-t border-white/10 bg-slate-950/80 px-4 py-4 text-center text-[11px] text-slate-500 backdrop-blur-sm md:px-8">
+          {t('footer.line')}
         </footer>
+
+        <LanguageQuizModal
+          open={quizOpen}
+          onClose={() => setQuizOpen(false)}
+          candidateIds={learningLanguages}
+        />
+        </div>
       </div>
-    </ConfigProvider>
   )
+}
+
+export default function App() {
+  const [screen, setScreen] = useState<AppScreen>(() => loadScreen())
+
+  const goLearn = useCallback(() => {
+    saveScreen('learn')
+    setScreen('learn')
+  }, [])
+
+  const goPractice = useCallback(() => {
+    saveScreen('practice')
+    setScreen('practice')
+  }, [])
+
+  const goHub = useCallback(() => {
+    saveScreen('hub')
+    setScreen('hub')
+  }, [])
+
+  if (screen === 'practice') {
+    return <LanguagePracticeShell onHome={goHub} />
+  }
+
+  if (screen === 'hub') {
+    return (
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+        <LearningHub onContinueBlocks={goLearn} onContinuePractice={goPractice} />
+      </div>
+    )
+  }
+
+  return <LearnShell onHome={goHub} onPractice={goPractice} />
 }

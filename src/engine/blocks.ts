@@ -57,3 +57,6 @@ export type FlatStep =
 export function clampRepeatCount(n: number): number {
   return Math.max(2, Math.min(12, Math.round(n)))
 }
+
+/** Default number when inserting Crear variable from the palette (must match implicit repeat-count fallback). */
+export const DEFAULT_VAR_DECL_INITIAL = 3

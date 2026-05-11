@@ -1,12 +1,35 @@
 import { InputNumber, Segmented, Select, Tag } from 'antd'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Layers, MousePointerClick, Sparkles, Trash2 } from 'lucide-react'
+import { Boxes, Braces, Crosshair, GripVertical, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { PaletteEntry } from './constants'
+import { iconStroke } from './icons'
 import { BLOCK_OPTIONS, COLOR_META } from './constants'
-import { formatCountLabel } from './helpers'
-import type { BlockNode, CountSource } from '../engine/blocks'
+import { useI18n } from '../i18n/I18nContext'
+import type { BlockNode, ColorKey, CountSource } from '../engine/blocks'
 import { clampRepeatCount } from '../engine/blocks'
+import { formatCountLabel } from './helpers'
+
+function translateGroup(group: string, t: (k: string) => string): string {
+  if (group === 'Acciones') return t('palette.groupActions')
+  if (group === 'Control') return t('palette.groupControl')
+  if (group === 'Valores') return t('palette.groupValues')
+  return group
+}
+
+function paletteDescription(id: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
+  if (id === 'newLine') return t('palette.newLine.desc')
+  if (id === 'skip') return t('palette.skip.desc')
+  if (id === 'repeat') return t('palette.repeat.desc')
+  if (id === 'varDecl') return t('palette.varDecl.desc')
+  if (id.startsWith('drawBox:')) {
+    const color = id.split(':')[1] as ColorKey
+    const colorLabel = t(`color.${color}`)
+    return t('palette.drawBox.desc', { color: colorLabel })
+  }
+  return ''
+}
 
 // eslint-disable-next-line react-refresh/only-export-components -- re-export consumed by `./App`
 export { formatCountLabel } from './helpers'
@@ -22,11 +45,11 @@ export function CursorBadge({
     <span
       className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-medium ${
         active
-          ? 'border border-indigo-200 bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100'
-          : 'border border-slate-200 bg-slate-100 text-slate-600'
+          ? 'border border-indigo-400/40 bg-indigo-950/80 text-indigo-100 ring-1 ring-indigo-500/30'
+          : 'border border-slate-600 bg-slate-800/90 text-slate-400'
       }`}
     >
-      <MousePointerClick className="size-3.5" aria-hidden />
+      <Crosshair className="size-3.5 shrink-0" strokeWidth={iconStroke.medium} aria-hidden />
       {label}
     </span>
   )
@@ -41,6 +64,7 @@ export function BlockPalette({
   onPick: (blockId: string) => void
   disabled: boolean
 }) {
+  const { t } = useI18n()
   const visible = BLOCK_OPTIONS.filter((b) => allowed.has(b.id))
   const groups = new Map<string, PaletteEntry[]>()
   for (const b of visible) {
@@ -56,8 +80,8 @@ export function BlockPalette({
       {orderedGroups.map(([group, items]) => (
         <div key={group}>
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            <Layers className="size-3.5" aria-hidden />
-            {group}
+            <Boxes className="size-3.5 shrink-0 text-violet-400/90" strokeWidth={iconStroke.soft} aria-hidden />
+            {translateGroup(group, t)}
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {items.map((b) => (
@@ -68,10 +92,10 @@ export function BlockPalette({
                 whileHover={{ scale: disabled ? 1 : 1.02 }}
                 whileTap={{ scale: disabled ? 1 : 0.98 }}
                 onClick={() => onPick(b.id)}
-                className="flex flex-col items-start rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-800 shadow-sm transition hover:border-indigo-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex flex-col items-start rounded-2xl border border-slate-600/80 bg-slate-900/90 px-3 py-2.5 text-left text-sm text-slate-100 shadow-md shadow-black/30 transition hover:border-indigo-400/45 hover:bg-slate-800/95 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="font-code text-xs font-medium text-indigo-800">{b.label}</span>
-                <span className="text-[11px] text-slate-600">{b.description}</span>
+                <span className="font-code text-xs font-medium text-indigo-300">{b.label}</span>
+                <span className="text-[11px] text-slate-400">{paletteDescription(b.id, t)}</span>
               </motion.button>
             ))}
           </div>
@@ -82,19 +106,16 @@ export function BlockPalette({
 }
 
 export function EmptyWorkspaceHint() {
+  const { t } = useI18n()
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center ring-1 ring-slate-100"
+      className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-indigo-500/35 bg-slate-950/60 px-4 py-8 text-center ring-1 ring-indigo-500/20"
     >
-      <Sparkles className="mb-2 size-8 text-indigo-600" aria-hidden />
-      <p className="text-sm font-medium text-slate-900">Tu código aparecerá aquí</p>
-      <p className="mt-1 max-w-sm text-xs text-slate-600">
-        Arrastra desde la paleta o haz clic para construir. Las variables declaradas van al pie del
-        programa; dentro de Repetir puedes repetir usando un número o un nombre de variable definido
-        arriba.
-      </p>
+      <Braces className="mb-2 size-9 text-indigo-400" strokeWidth={iconStroke.soft} aria-hidden />
+      <p className="text-sm font-medium text-slate-100">{t('blocks.emptyTitle')}</p>
+      <p className="mt-1 max-w-sm text-xs text-slate-400">{t('blocks.emptyBody')}</p>
     </motion.div>
   )
 }
@@ -103,6 +124,101 @@ const REPEAT_LITERAL_OPTIONS = Array.from({ length: 11 }, (_, i) => i + 2).map((
   value: n,
   label: `${n}×`,
 }))
+
+const VAR_DRAG_TYPE = 'application/x-codejump-var'
+
+function VarNameDragPick({
+  value,
+  options,
+  onChange,
+  disabled,
+  compact,
+}: {
+  value: string
+  options: readonly string[]
+  onChange: (name: string) => void
+  disabled?: boolean
+  compact?: boolean
+}) {
+  const { t } = useI18n()
+  const list = useMemo(
+    () => (options.length > 0 ? [...options] : [value || 'n']),
+    [options, value],
+  )
+  const current = list.includes(value) ? value : list[0]!
+  const [slotOver, setSlotOver] = useState(false)
+
+  useEffect(() => {
+    if (disabled || options.length === 0) return
+    if (!options.includes(value)) onChange(options[0]!)
+  }, [disabled, value, options, onChange])
+
+  const chipCls = compact
+    ? 'flex items-center gap-1 rounded-lg border border-indigo-500/35 bg-indigo-950/45 px-2 py-0.5 font-mono text-[11px] font-medium text-indigo-100 shadow-sm transition hover:border-indigo-400/60 hover:bg-indigo-900/55 disabled:cursor-not-allowed disabled:opacity-40'
+    : 'flex items-center gap-1 rounded-lg border border-indigo-500/35 bg-indigo-950/45 px-2.5 py-1 font-mono text-xs font-medium text-indigo-100 shadow-sm transition hover:border-indigo-400/60 hover:bg-indigo-900/55 disabled:cursor-not-allowed disabled:opacity-40'
+
+  const slotCls = compact
+    ? `flex min-h-[26px] min-w-[68px] shrink-0 items-center justify-center rounded-lg border px-2 font-mono text-[11px] transition ${
+        slotOver ? 'border-emerald-400 bg-emerald-950/45 ring-1 ring-emerald-500/30' : 'border-slate-600 bg-slate-950/90'
+      }`
+    : `flex min-h-[30px] min-w-[80px] shrink-0 items-center justify-center rounded-lg border px-2 py-0.5 font-mono text-xs transition ${
+        slotOver ? 'border-emerald-400 bg-emerald-950/45 ring-1 ring-emerald-500/30' : 'border-slate-600 bg-slate-950/90'
+      }`
+
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        <div
+          className={slotCls}
+          aria-label={t('blocks.varDropTarget')}
+          onDragOver={(e) => {
+            if (disabled) return
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'copy'
+          }}
+          onDragEnter={(e) => {
+            if (disabled) return
+            e.preventDefault()
+            setSlotOver(true)
+          }}
+          onDragLeave={() => setSlotOver(false)}
+          onDrop={(e) => {
+            if (disabled) return
+            e.preventDefault()
+            setSlotOver(false)
+            const name =
+              e.dataTransfer.getData(VAR_DRAG_TYPE) ||
+              e.dataTransfer.getData('text/plain').trim()
+            if (name && list.includes(name)) onChange(name)
+          }}
+        >
+          <span className="text-emerald-200/95">{current}</span>
+        </div>
+        <div className="flex min-w-0 flex-wrap gap-1">
+          {list.map((n) => (
+            <button
+              key={n}
+              type="button"
+              draggable={!disabled}
+              disabled={disabled}
+              onDragStart={(e) => {
+                e.dataTransfer.setData(VAR_DRAG_TYPE, n)
+                e.dataTransfer.setData('text/plain', n)
+                e.dataTransfer.effectAllowed = 'copy'
+              }}
+              onClick={() => !disabled && onChange(n)}
+              className={chipCls}
+            >
+              <GripVertical className="size-3 shrink-0 text-indigo-400/80" strokeWidth={iconStroke.medium} aria-hidden />
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+      <span className="text-[10px] leading-tight text-slate-500">{t('blocks.varOptionsHint')}</span>
+    </div>
+  )
+}
 
 export function BlockListView({
   nodes,
@@ -123,8 +239,9 @@ export function BlockListView({
   onSelectRepeat: (id: string) => void
   varNameOptions: string[]
 }) {
+  const { t } = useI18n()
   return (
-    <ul className={`space-y-2 ${depth > 0 ? 'border-l border-slate-200 pl-3' : ''}`}>
+    <ul className={`space-y-2 ${depth > 0 ? 'border-l border-indigo-500/25 pl-3' : ''}`}>
       <AnimatePresence initial={false}>
         {nodes.map((node, idx) => (
           <motion.li
@@ -141,9 +258,9 @@ export function BlockListView({
               scale: { type: 'spring', stiffness: 460, damping: 14 },
               layout: { type: 'spring', stiffness: 380, damping: 28 },
             }}
-            className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${
+            className={`rounded-2xl border border-slate-600/90 bg-slate-900/85 shadow-lg shadow-black/25 ${
               node.kind === 'repeat' && activeInsertId === node.id
-                ? 'border-emerald-300 ring-2 ring-emerald-200'
+                ? 'border-emerald-400/70 ring-2 ring-emerald-500/35'
                 : ''
             }`}
           >
@@ -165,7 +282,7 @@ export function BlockListView({
               }
               className={`flex flex-wrap items-center gap-2 px-3 py-2 ${
                 node.kind === 'repeat'
-                  ? 'cursor-pointer select-none hover:bg-slate-50'
+                  ? 'cursor-pointer select-none hover:bg-slate-800/70'
                   : ''
               }`}
             >
@@ -180,19 +297,18 @@ export function BlockListView({
 
               {node.kind === 'varDecl' && (
                 <div
-                  className="flex flex-wrap items-center gap-2"
+                  className="flex flex-wrap items-center gap-3"
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-mono text-xs text-emerald-700">variable</span>
-                  <Select
-                    size="small"
-                    className="min-w-[72px]"
+                  <span className="shrink-0 font-mono text-xs text-emerald-400">{t('blocks.varKeyword')}</span>
+                  <VarNameDragPick
+                    compact
                     value={node.name}
-                    options={varNameOptions.map((n) => ({ value: n, label: n }))}
-                    onChange={(v) => onUpdateVarDecl(node.id, { name: String(v) })}
+                    options={varNameOptions}
+                    onChange={(name) => onUpdateVarDecl(node.id, { name })}
                   />
-                  <span className="text-[11px] text-slate-500">=</span>
+                  <span className="shrink-0 text-[11px] text-slate-500">=</span>
                   <InputNumber
                     size="small"
                     min={2}
@@ -208,7 +324,7 @@ export function BlockListView({
 
               {node.kind === 'drawBox' && (
                 <>
-                  <span className="font-code text-xs text-indigo-800">
+                  <span className="font-code text-xs text-indigo-200">
                     drawBox(&quot;{node.color}&quot;)
                   </span>
                   <span
@@ -218,13 +334,13 @@ export function BlockListView({
                 </>
               )}
               {node.kind === 'newLine' && (
-                <span className="font-code text-xs text-indigo-800">newLine()</span>
+                <span className="font-code text-xs text-indigo-200">newLine()</span>
               )}
               {node.kind === 'skip' && (
-                <span className="font-code text-xs text-slate-700">
+                <span className="font-code text-xs text-slate-300">
                   skip()
                   <span
-                    className="ml-2 inline-block rounded-md border border-dashed border-slate-400 bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
+                    className="ml-2 inline-block rounded-md border border-dashed border-slate-500 bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400"
                     title="Sin pintar"
                   >
                     vacío
@@ -237,12 +353,12 @@ export function BlockListView({
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <span className="font-code text-xs text-indigo-800">Repetir</span>
+                  <span className="font-code text-xs text-indigo-200">Repetir</span>
                   <Segmented
                     size="small"
                     options={[
-                      { label: 'Número', value: 'literal' },
-                      { label: 'Variable', value: 'var' },
+                      { label: t('blocks.segmentNumber'), value: 'literal' },
+                      { label: t('blocks.segmentVariable'), value: 'var' },
                     ]}
                     value={node.count.type === 'literal' ? 'literal' : 'var'}
                     onChange={(v) => {
@@ -276,17 +392,16 @@ export function BlockListView({
                       }
                     />
                   ) : (
-                    <Select
-                      size="small"
-                      className="min-w-[88px]"
+                    <VarNameDragPick
+                      compact
                       value={
                         varNameOptions.includes(node.count.name)
                           ? node.count.name
                           : (varNameOptions[0] ?? node.count.name)
                       }
-                      options={varNameOptions.map((n) => ({ value: n, label: n }))}
-                      onChange={(v) =>
-                        onChangeRepeatCountSource(node.id, { type: 'var', name: String(v) })
+                      options={varNameOptions}
+                      onChange={(name) =>
+                        onChangeRepeatCountSource(node.id, { type: 'var', name })
                       }
                       disabled={varNameOptions.length === 0}
                     />
@@ -297,22 +412,22 @@ export function BlockListView({
 
               <motion.button
                 type="button"
-                aria-label="Eliminar bloque"
+                aria-label={t('blocks.deleteBlock')}
                 whileTap={{ scale: 0.92 }}
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(node.id)
                 }}
-                className="ml-auto rounded-lg p-1.5 text-rose-500 transition hover:bg-rose-50 hover:text-rose-600"
+                className="ml-auto rounded-lg p-1.5 text-rose-400 transition hover:bg-rose-950/80 hover:text-rose-300"
               >
-                <Trash2 className="size-4" aria-hidden />
+                <Trash2 className="size-4" strokeWidth={iconStroke.medium} aria-hidden />
               </motion.button>
             </div>
             {node.kind === 'repeat' && (
-              <div className="border-t border-slate-200 bg-slate-50/80 px-2 py-2">
+              <div className="border-t border-slate-700/90 bg-slate-950/50 px-2 py-2">
                 {node.children.length === 0 ? (
                   <p className="px-2 py-3 text-center text-[11px] text-slate-500">
-                    Selecciona este Repetir y añade bloques desde la paleta.
+                    {t('blocks.repeatEmpty')}
                   </p>
                 ) : (
                   <BlockListView

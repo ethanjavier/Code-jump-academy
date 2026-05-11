@@ -1,23 +1,56 @@
+import { CAMPAIGN_CHAPTERS } from '../campaign/buildCampaign'
+
 export const XP_SEGMENT = 100
 
 export type GameProgress = {
   xp: number
   lessons: Record<string, { stars: 1 | 2 | 3 }>
+  /** Posición en la campaña (persistida en localStorage) */
+  chapterIndex: number
+  puzzleIndex: number
 }
 
 const STORAGE_KEY = 'codejump-game-v1'
 
+function normalizeProgress(p: Partial<GameProgress> | null | undefined): GameProgress {
+  const xp =
+    typeof p?.xp === 'number' && Number.isFinite(p.xp) ? Math.max(0, p.xp) : 0
+  const lessons = p?.lessons ?? {}
+
+  const nChapters = CAMPAIGN_CHAPTERS.length
+  if (nChapters <= 0) {
+    return { xp, lessons, chapterIndex: 0, puzzleIndex: 0 }
+  }
+
+  let ch =
+    typeof p?.chapterIndex === 'number' && Number.isFinite(p.chapterIndex)
+      ? Math.floor(p.chapterIndex)
+      : 0
+  ch = Math.max(0, Math.min(nChapters - 1, ch))
+
+  const puzzlesInChapter = CAMPAIGN_CHAPTERS[ch]!.puzzles.length
+  const maxP = Math.max(0, puzzlesInChapter - 1)
+
+  let pi =
+    typeof p?.puzzleIndex === 'number' && Number.isFinite(p.puzzleIndex)
+      ? Math.floor(p.puzzleIndex)
+      : 0
+  pi = Math.max(0, Math.min(maxP, pi))
+
+  return { xp, lessons, chapterIndex: ch, puzzleIndex: pi }
+}
+
 export function loadProgress(): GameProgress {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { xp: 0, lessons: {} }
-    const p = JSON.parse(raw) as GameProgress
+    if (!raw) return normalizeProgress({ xp: 0, lessons: {} })
+    const p = JSON.parse(raw) as Partial<GameProgress>
     if (typeof p.xp !== 'number' || !Number.isFinite(p.xp)) {
-      return { xp: 0, lessons: {} }
+      return normalizeProgress({ ...p, xp: 0 })
     }
-    return { xp: Math.max(0, p.xp), lessons: p.lessons ?? {} }
+    return normalizeProgress({ ...p, xp: Math.max(0, p.xp) })
   } catch {
-    return { xp: 0, lessons: {} }
+    return normalizeProgress({ xp: 0, lessons: {} })
   }
 }
 
@@ -38,6 +71,7 @@ export function mergeWin(
   const prev = state.lessons[lessonKey]?.stars ?? 0
   const best = Math.max(prev, stars) as 1 | 2 | 3
   return {
+    ...state,
     xp: state.xp + xpAdd,
     lessons: { ...state.lessons, [lessonKey]: { stars: best } },
   }
