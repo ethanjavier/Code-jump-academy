@@ -2,7 +2,6 @@ import { Alert, Button, Modal, Progress, Select, Tag } from 'antd'
 import { motion } from 'framer-motion'
 import {
   Blocks,
-  BookOpen,
   BookOpenText,
   CheckCircle2,
   ChevronLeft,
@@ -33,6 +32,8 @@ import {
   type ReactNode,
 } from 'react'
 
+import { getGuidedCourse, hasGuidedCourse } from './courses/courseRegistry'
+import { GuidedLessonRunner } from './app/guidedLesson/GuidedLessonRunner'
 import { CAMPAIGN_CHAPTERS } from './campaign/buildCampaign'
 import { CHAPTER_TITLES_EN } from './campaign/chapterThemes'
 import {
@@ -79,16 +80,26 @@ import {
 } from './app/helpers'
 import { runStepsOnGrid } from './app/interpreter'
 import { LanguageQuizModal } from './app/LanguageQuizModal'
+import { LearnPracticeModeToggle } from './app/LearnPracticeModeToggle'
 import { LanguagePracticeShell } from './app/LanguagePracticeShell'
 import { LearningHub } from './app/LearningHub'
 import {
+  parseAppUrl,
+  replaceUrlSearch,
+  serializeAppUrl,
+  type PracticeDeepLink,
+} from './app/appUrl'
+import {
   chapterTitleForLocale,
+  getTrackPracticeMode,
   loadLearningLanguages,
   loadScreen,
   saveScreen,
+  saveTrackPracticeMode,
   type AppScreen,
+  type PracticeTrackMode,
 } from './app/learningPreferences'
-import { primaryCodeFocus, type LearningLanguageId } from './app/learningTracks'
+import { hasLanguagePractice, primaryCodeFocus, type LearningLanguageId } from './app/learningTracks'
 import { useI18n } from './i18n/I18nContext'
 
 function collectRepeatsFromNode(n: BlockNode): RepeatBlock[] {
@@ -803,10 +814,80 @@ function PuzzleWorkspace({
   )
 }
 
-function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: () => void }) {
+/** Guided language lessons embedded in the Learn (blocks) shell when URL has e.g. lang + lesson + pmode. */
+type LearnGuidedEmbed = {
+  lang: LearningLanguageId
+  lessonIndex: number
+  practiceMode: PracticeTrackMode
+}
+
+function parseLearnGuidedEmbed(search: string): LearnGuidedEmbed | null {
+  const { screen, practice } = parseAppUrl(search)
+  if (screen !== 'learn' || !practice?.lang) return null
+  const langs = loadLearningLanguages().filter((id): id is LearningLanguageId => hasLanguagePractice(id))
+  if (!langs.includes(practice.lang)) return null
+  if (!hasGuidedCourse(practice.lang)) return null
+  if (practice.overview) return null
+  if (practice.quiz !== undefined) return null
+
+  const openGuided = practice.lesson !== undefined || practice.pmode !== undefined
+  if (!openGuided) return null
+
+  if (practice.pmode) {
+    saveTrackPracticeMode(practice.lang, practice.pmode)
+  }
+  const course = getGuidedCourse(practice.lang)
+  if (!course?.lessons.length) return null
+  const max = course.lessons.length - 1
+  const lessonIndex = Math.min(max, Math.max(0, practice.lesson ?? 0))
+  const practiceMode: PracticeTrackMode = practice.pmode ?? getTrackPracticeMode(practice.lang)
+  return { lang: practice.lang, lessonIndex, practiceMode }
+}
+
+function LearnShell({
+  onHome,
+  onPractice,
+}: {
+  onHome: () => void
+  onPractice: (deep?: PracticeDeepLink | null) => void
+}) {
   const { t, locale, setLocale } = useI18n()
   const [learningLanguages] = useState<LearningLanguageId[]>(() => loadLearningLanguages())
   const [quizOpen, setQuizOpen] = useState(false)
+  const [guidedEmbed, setGuidedEmbed] = useState<LearnGuidedEmbed | null>(() =>
+    typeof window !== 'undefined' ? parseLearnGuidedEmbed(window.location.search) : null,
+  )
+
+  useEffect(() => {
+    const onPop = () => setGuidedEmbed(parseLearnGuidedEmbed(window.location.search))
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  useEffect(() => {
+    if (guidedEmbed) {
+      replaceUrlSearch(
+        serializeAppUrl('learn', {
+          lang: guidedEmbed.lang,
+          pmode: guidedEmbed.practiceMode,
+          lesson: guidedEmbed.lessonIndex,
+        }),
+      )
+      return
+    }
+    const { practice } = parseAppUrl(window.location.search)
+    if (
+      practice &&
+      (practice.lang ||
+        practice.lesson !== undefined ||
+        practice.pmode ||
+        practice.quiz !== undefined ||
+        practice.overview)
+    ) {
+      replaceUrlSearch(serializeAppUrl('learn'))
+    }
+  }, [guidedEmbed])
+
   const showLanguagePractice = useMemo(
     () => learningLanguages.some((id) => id !== 'blocks'),
     [learningLanguages],
@@ -882,6 +963,11 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
 
   const lessonKey = `${chapterIndex}:${puzzleIndex}`
 
+  const guidedCourseLen = useMemo(
+    () => (guidedEmbed ? getGuidedCourse(guidedEmbed.lang)?.lessons.length ?? 0 : 0),
+    [guidedEmbed],
+  )
+
   return (
       <div className="font-display relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-950 text-slate-100">
         <div
@@ -909,6 +995,24 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
                 {t('nav.home')}
               </Button>
             </div>
+            <div className="flex shrink-0 items-center border-l border-white/10 pl-3">
+              <LearnPracticeModeToggle
+                value="learn"
+                onLearn={() => {}}
+                onPractice={() =>
+                  onPractice(
+                    guidedEmbed
+                      ? {
+                          lang: guidedEmbed.lang,
+                          pmode: guidedEmbed.practiceMode,
+                          lesson: guidedEmbed.lessonIndex,
+                        }
+                      : undefined,
+                  )
+                }
+                practiceDisabled={!showLanguagePractice}
+              />
+            </div>
             <div className="flex min-w-0 shrink-0 items-center gap-2 border-l border-white/10 pl-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-indigo-400/30 bg-gradient-to-br from-indigo-600 to-violet-700 shadow-lg shadow-indigo-950/50 ring-1 ring-white/15">
                 <SquareCode
@@ -922,7 +1026,7 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
                   {t('header.tagline')}
                 </p>
                 <h1 className="truncate text-sm font-semibold text-white sm:text-base">
-                  {t('header.title')}
+                  {guidedEmbed ? t(`hub.track.${guidedEmbed.lang}.title`) : t('header.title')}
                 </h1>
               </div>
             </div>
@@ -941,92 +1045,102 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
             </div>
 
             <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-1.5 sm:gap-x-4">
-              <div className="flex max-w-full items-center gap-1.5">
-                <Library className="size-3.5 shrink-0 text-indigo-400" strokeWidth={iconStroke.medium} aria-hidden />
-                <span className="hidden text-[11px] text-slate-400 sm:inline">{t('header.chapter')}</span>
-                <Select
-                  size="small"
-                  className="min-w-[160px] max-w-[min(100vw-12rem,280px)] sm:min-w-[200px]"
-                  value={chapterIndex}
-                  options={CAMPAIGN_CHAPTERS.map((c) => ({
-                    value: c.index,
-                    label: `${chapterTitleForLocale(c.title, CHAPTER_TITLES_EN, c.index, locale)} · ${c.puzzles.length}`,
-                  }))}
-                  onChange={(v) => {
-                    const next = typeof v === 'number' ? v : Number(v)
-                    setChapterSafe(next)
-                  }}
-                />
-              </div>
+              {!guidedEmbed ? (
+                <>
+                  <div className="flex max-w-full items-center gap-1.5">
+                    <Library className="size-3.5 shrink-0 text-indigo-400" strokeWidth={iconStroke.medium} aria-hidden />
+                    <span className="hidden text-[11px] text-slate-400 sm:inline">{t('header.chapter')}</span>
+                    <Select
+                      size="small"
+                      className="min-w-[160px] max-w-[min(100vw-12rem,280px)] sm:min-w-[200px]"
+                      value={chapterIndex}
+                      options={CAMPAIGN_CHAPTERS.map((c) => ({
+                        value: c.index,
+                        label: `${chapterTitleForLocale(c.title, CHAPTER_TITLES_EN, c.index, locale)} · ${c.puzzles.length}`,
+                      }))}
+                      onChange={(v) => {
+                        const next = typeof v === 'number' ? v : Number(v)
+                        setChapterSafe(next)
+                      }}
+                    />
+                  </div>
 
-              <div className="flex items-center gap-1 border-l border-white/10 pl-3">
-                <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
-                  <Button
-                    size="small"
-                    shape="round"
-                    className="border-indigo-500/45 bg-indigo-950/55 font-display font-semibold text-indigo-100 hover:!border-indigo-400/70 hover:!bg-indigo-900/60 hover:!text-white"
-                    aria-label={t('header.prevPuzzle')}
-                    icon={<ChevronLeft className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
-                    onClick={() => adjustPuzzle(-1)}
-                    disabled={puzzleIndex <= 0}
-                  />
-                </motion.span>
-                <Select<number>
-                  size="small"
-                  className="w-[118px] sm:w-[132px]"
-                  value={puzzleIndex}
-                  popupMatchSelectWidth={false}
-                  options={chapter.puzzles.map((_, i: number) => ({
-                    value: i,
-                    label: t('header.puzzleOption', {
-                      num: String(i + 1).padStart(2, '0'),
-                    }),
-                  }))}
-                  onChange={(v) => setProgress((p) => ({ ...p, puzzleIndex: Number(v) }))}
-                />
-                <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
-                  <Button
-                    size="small"
-                    shape="round"
-                    className="border-fuchsia-500/45 bg-fuchsia-950/45 font-display font-semibold text-fuchsia-100 hover:!border-fuchsia-400/70 hover:!bg-fuchsia-900/55 hover:!text-white"
-                    aria-label={t('header.nextPuzzle')}
-                    icon={<ChevronRight className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
-                    onClick={() => adjustPuzzle(1)}
-                    disabled={puzzleIndex >= chapter.puzzles.length - 1}
-                  />
-                </motion.span>
-              </div>
+                  <div className="flex items-center gap-1 border-l border-white/10 pl-3">
+                    <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
+                      <Button
+                        size="small"
+                        shape="round"
+                        className="border-indigo-500/45 bg-indigo-950/55 font-display font-semibold text-indigo-100 hover:!border-indigo-400/70 hover:!bg-indigo-900/60 hover:!text-white"
+                        aria-label={t('header.prevPuzzle')}
+                        icon={<ChevronLeft className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
+                        onClick={() => adjustPuzzle(-1)}
+                        disabled={puzzleIndex <= 0}
+                      />
+                    </motion.span>
+                    <Select<number>
+                      size="small"
+                      className="w-[118px] sm:w-[132px]"
+                      value={puzzleIndex}
+                      popupMatchSelectWidth={false}
+                      options={chapter.puzzles.map((_, i: number) => ({
+                        value: i,
+                        label: t('header.puzzleOption', {
+                          num: String(i + 1).padStart(2, '0'),
+                        }),
+                      }))}
+                      onChange={(v) => setProgress((p) => ({ ...p, puzzleIndex: Number(v) }))}
+                    />
+                    <motion.span whileTap={{ scale: 0.92 }} className="inline-block">
+                      <Button
+                        size="small"
+                        shape="round"
+                        className="border-fuchsia-500/45 bg-fuchsia-950/45 font-display font-semibold text-fuchsia-100 hover:!border-fuchsia-400/70 hover:!bg-fuchsia-900/55 hover:!text-white"
+                        aria-label={t('header.nextPuzzle')}
+                        icon={<ChevronRight className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
+                        onClick={() => adjustPuzzle(1)}
+                        disabled={puzzleIndex >= chapter.puzzles.length - 1}
+                      />
+                    </motion.span>
+                  </div>
 
-              <div className="flex min-w-[140px] max-w-[200px] flex-1 items-center gap-2 border-l border-white/10 pl-3 sm:min-w-[160px] sm:max-w-none sm:flex-none">
-                <ListOrdered className="size-3.5 shrink-0 text-slate-500" strokeWidth={iconStroke.medium} aria-hidden />
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <Progress
-                    percent={progressPercent}
-                    size="small"
-                    showInfo={false}
-                    strokeColor="#818cf8"
-                  />
+                  <div className="flex min-w-[140px] max-w-[200px] flex-1 items-center gap-2 border-l border-white/10 pl-3 sm:min-w-[160px] sm:max-w-none sm:flex-none">
+                    <ListOrdered className="size-3.5 shrink-0 text-slate-500" strokeWidth={iconStroke.medium} aria-hidden />
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <Progress
+                        percent={progressPercent}
+                        size="small"
+                        showInfo={false}
+                        strokeColor="#818cf8"
+                      />
+                    </div>
+                    <span className="shrink-0 tabular-nums text-[11px] text-slate-400">
+                      {puzzleIndex + 1}/{chapter.puzzles.length}
+                    </span>
+                    <Tag className="m-0 shrink-0 border border-slate-600/70 px-1.5 py-0 text-[10px] leading-tight text-slate-200">
+                      {difficultyLabel}
+                    </Tag>
+                  </div>
+                </>
+              ) : (
+                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 border-l border-white/10 pl-3">
+                  <span className="font-display text-sm font-semibold text-slate-200">
+                    {t('guided.lessonMeta', {
+                      current: String(guidedEmbed.lessonIndex + 1),
+                      total: String(guidedCourseLen),
+                    })}
+                  </span>
+                  <Tag
+                    color={guidedEmbed.practiceMode === 'beginner' ? 'cyan' : 'default'}
+                    className="m-0 font-display text-[11px] font-semibold"
+                  >
+                    {guidedEmbed.practiceMode === 'beginner'
+                      ? t('practice.modeBeginner')
+                      : t('practice.modeAdvanced')}
+                  </Tag>
                 </div>
-                <span className="shrink-0 tabular-nums text-[11px] text-slate-400">
-                  {puzzleIndex + 1}/{chapter.puzzles.length}
-                </span>
-                <Tag className="m-0 shrink-0 border border-slate-600/70 px-1.5 py-0 text-[10px] leading-tight text-slate-200">
-                  {difficultyLabel}
-                </Tag>
-              </div>
+              )}
 
               <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 border-t border-white/5 pt-2 sm:w-auto sm:border-t-0 sm:pt-0 lg:border-l lg:border-white/10 lg:pl-3">
-                {showLanguagePractice ? (
-                  <Button
-                    type="text"
-                    size="small"
-                    className="font-display text-[11px] font-semibold text-sky-200 hover:!bg-white/10 hover:!text-white"
-                    icon={<BookOpen className="size-3.5" strokeWidth={iconStroke.medium} aria-hidden />}
-                    onClick={onPractice}
-                  >
-                    {t('header.languagePractice')}
-                  </Button>
-                ) : null}
                 <Button
                   type="text"
                   size="small"
@@ -1066,18 +1180,52 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
           </div>
         </header>
 
-        <PuzzleWorkspace
-          key={lessonKey}
-          level={level}
-          chapterTitle={chapterDisplayTitle}
-          lessonSignature={lessonKey}
-          focusLanguages={learningLanguages}
-          campaignHasRemainingPuzzle={campaignHasRemainingPuzzle}
-          onAdvanceCampaignPuzzle={goNextCampaignPuzzle}
-          onLessonWin={(stars) => {
-            setProgress((g) => mergeWin(g, lessonKey, stars))
-          }}
-        />
+        {guidedEmbed ? (
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-2 py-2 sm:px-3 md:px-5 lg:px-6">
+            <GuidedLessonRunner
+              key={`learn-guided-${guidedEmbed.lang}-${guidedEmbed.lessonIndex}-${locale}-${guidedEmbed.practiceMode}`}
+              lang={guidedEmbed.lang}
+              lessonIndex={guidedEmbed.lessonIndex}
+              practiceMode={guidedEmbed.practiceMode}
+              onBack={() => setGuidedEmbed(null)}
+              onLessonComplete={() => {}}
+              hasNextLesson={guidedEmbed.lessonIndex + 1 < guidedCourseLen}
+              hasPrevLesson={guidedEmbed.lessonIndex > 0}
+              onPrevLesson={() =>
+                setGuidedEmbed((s) =>
+                  s && s.lessonIndex > 0 ? { ...s, lessonIndex: s.lessonIndex - 1 } : s,
+                )
+              }
+              onNextLesson={() =>
+                setGuidedEmbed((s) =>
+                  s && guidedCourseLen > 0 && s.lessonIndex + 1 < guidedCourseLen
+                    ? { ...s, lessonIndex: s.lessonIndex + 1 }
+                    : s,
+                )
+              }
+              onGoToLesson={(index) =>
+                setGuidedEmbed((s) => {
+                  if (!s) return s
+                  if (index < 0 || index >= guidedCourseLen) return s
+                  return { ...s, lessonIndex: index }
+                })
+              }
+            />
+          </div>
+        ) : (
+          <PuzzleWorkspace
+            key={lessonKey}
+            level={level}
+            chapterTitle={chapterDisplayTitle}
+            lessonSignature={lessonKey}
+            focusLanguages={learningLanguages}
+            campaignHasRemainingPuzzle={campaignHasRemainingPuzzle}
+            onAdvanceCampaignPuzzle={goNextCampaignPuzzle}
+            onLessonWin={(stars) => {
+              setProgress((g) => mergeWin(g, lessonKey, stars))
+            }}
+          />
+        )}
 
         <footer className="shrink-0 border-t border-white/10 bg-slate-950/80 px-4 py-4 text-center text-[11px] text-slate-500 backdrop-blur-sm md:px-8">
           {t('footer.line')}
@@ -1094,25 +1242,49 @@ function LearnShell({ onHome, onPractice }: { onHome: () => void; onPractice: ()
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<AppScreen>(() => loadScreen())
+  const [screen, setScreen] = useState<AppScreen>(() => {
+    if (typeof window !== 'undefined') {
+      const { screen: fromUrl } = parseAppUrl(window.location.search)
+      if (fromUrl) {
+        saveScreen(fromUrl)
+        return fromUrl
+      }
+    }
+    return loadScreen()
+  })
+
+  useEffect(() => {
+    const onPop = () => {
+      const { screen: next } = parseAppUrl(window.location.search)
+      if (next) {
+        saveScreen(next)
+        setScreen(next)
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   const goLearn = useCallback(() => {
     saveScreen('learn')
     setScreen('learn')
+    replaceUrlSearch(serializeAppUrl('learn'))
   }, [])
 
-  const goPractice = useCallback(() => {
+  const goPractice = useCallback((deep?: PracticeDeepLink | null) => {
     saveScreen('practice')
     setScreen('practice')
+    replaceUrlSearch(serializeAppUrl('practice', deep ?? undefined))
   }, [])
 
   const goHub = useCallback(() => {
     saveScreen('hub')
     setScreen('hub')
+    replaceUrlSearch(serializeAppUrl('hub'))
   }, [])
 
   if (screen === 'practice') {
-    return <LanguagePracticeShell onHome={goHub} />
+    return <LanguagePracticeShell onHome={goHub} onLearn={goLearn} />
   }
 
   if (screen === 'hub') {

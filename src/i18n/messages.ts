@@ -74,6 +74,9 @@ export const messages: Record<Locale, MessageDict> = {
     'header.puzzleOption': 'Puzzle {{num}}',
     'header.trackQuiz': 'Track quizzes',
     'header.languagePractice': 'Language exercises',
+    'header.modeLearn': 'Blocks',
+    'header.modePractice': 'Practice',
+    'header.modeToggleAria': 'Switch between block puzzles and language practice',
 
     'quiz.title': 'Quick track quiz',
     'quiz.pickLanguage': 'Language',
@@ -378,6 +381,9 @@ export const messages: Record<Locale, MessageDict> = {
     'header.puzzleOption': 'Puzzle {{num}}',
     'header.trackQuiz': 'Tests por lenguaje',
     'header.languagePractice': 'Ejercicios por lenguaje',
+    'header.modeLearn': 'Bloques',
+    'header.modePractice': 'Práctica',
+    'header.modeToggleAria': 'Cambiar entre puzzles con bloques y práctica por lenguaje',
 
     'quiz.title': 'Test rápido del lenguaje',
     'quiz.pickLanguage': 'Lenguaje',

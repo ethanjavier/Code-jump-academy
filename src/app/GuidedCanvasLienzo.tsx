@@ -6,6 +6,7 @@ import type {
   GuidedCanvasPiece,
   GuidedCanvasRow,
 } from '../courses/guidedLessonTypes'
+import { STRIPE_SWATCH_BG } from '../courses/stripeSwatch'
 import { COLOR_META } from './constants'
 import { iconStroke } from './icons'
 import { useI18n } from '../i18n/I18nContext'
@@ -195,6 +196,25 @@ function CanvasPiece({ piece }: { piece: GuidedCanvasPiece }) {
           ))}
         </div>
       )
+    case 'stripePaletteChip':
+      return (
+        <div className="flex w-full max-w-full flex-col rounded-2xl border border-slate-600/80 bg-slate-900/90 px-3 py-2.5 text-left shadow-md shadow-black/30 ring-1 ring-white/10">
+          <div className="flex items-start gap-2.5">
+            <span
+              className={`mt-0.5 h-9 w-1.5 shrink-0 rounded-full shadow-inner ${STRIPE_SWATCH_BG[piece.swatch]}`}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1">
+              <span className="font-display text-sm font-semibold text-slate-100">{localized(piece.label, locale)}</span>
+              {piece.snippet ? (
+                <pre className="mt-1.5 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-indigo-200/95">
+                  {localized(piece.snippet, locale)}
+                </pre>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )
     default:
       return null
   }
@@ -225,7 +245,7 @@ export function GuidedCanvasLienzo({ rows, tone = 'teal' }: Props) {
         {rows.map((row, ri) => (
           <div
             key={`canvas-row-${ri}`}
-            className={`flex flex-wrap items-center gap-2 ${row.some((p) => p.kind === 'caption' || p.kind === 'ifSplit' || p.kind === 'realGoal') ? 'w-full' : ''}`}
+            className={`flex flex-wrap items-center gap-2 ${row.some((p) => p.kind === 'caption' || p.kind === 'ifSplit' || p.kind === 'realGoal' || p.kind === 'stripePaletteChip') ? 'w-full' : ''}`}
           >
             {row.map((piece, pi) => (
               <CanvasPiece key={`piece-${ri}-${pi}`} piece={piece} />

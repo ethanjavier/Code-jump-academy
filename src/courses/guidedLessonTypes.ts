@@ -104,6 +104,8 @@ export type GuidedCanvasPiece =
     }
   | { kind: 'functionShell'; name: Localized; inner: GuidedCanvasPiece[] }
   | { kind: 'arrayCells'; items: Localized[] }
+  /** Beginner palette: one row per stripe piece (mirrors block palette cards). */
+  | { kind: 'stripePaletteChip'; label: Localized; snippet?: Localized; swatch: StripeSwatch }
 
 export type GuidedCanvasRow = GuidedCanvasPiece[]
 

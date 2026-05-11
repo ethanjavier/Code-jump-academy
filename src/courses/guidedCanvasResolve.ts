@@ -3,9 +3,36 @@ import type {
   GuidedConceptKey,
   GuidedLesson,
   Localized,
+  StripeChallengeExercise,
 } from './guidedLessonTypes'
 
 const L = (es: string, en: string): Localized => ({ es, en })
+
+/** Palette-style rows for stripe challenges — avoids misleading `introducesConcept` fallbacks (e.g. TS used `variable`). */
+function stripeChallengePaletteRows(ex: StripeChallengeExercise): GuidedCanvasRow[] {
+  const rows: GuidedCanvasRow[] = [
+    [
+      {
+        kind: 'caption',
+        text: L(
+          'Misma idea que la paleta de bloques: cada tarjeta resume una pieza; ordénalas en el centro.',
+          'Same idea as the block palette: each card summarizes one piece — order them in the center.',
+        ),
+      },
+    ],
+  ]
+  for (const p of ex.pieces) {
+    rows.push([
+      {
+        kind: 'stripePaletteChip',
+        label: p.label,
+        snippet: p.snippet,
+        swatch: p.swatch,
+      },
+    ])
+  }
+  return rows
+}
 
 /** Fallback mini-lienzo when a lesson has no explicit `canvasLienzo`. */
 function fallbackRowsForConcept(concept: GuidedConceptKey): GuidedCanvasRow[] {
@@ -201,6 +228,9 @@ function fallbackRowsForConcept(concept: GuidedConceptKey): GuidedCanvasRow[] {
  */
 export function resolveCanvasLienzo(lesson: GuidedLesson): GuidedCanvasRow[] {
   if (lesson.canvasLienzo?.length) return lesson.canvasLienzo
+  if (lesson.exercise.type === 'stripeChallenge') {
+    return stripeChallengePaletteRows(lesson.exercise)
+  }
   if (lesson.introducesConcept) return fallbackRowsForConcept(lesson.introducesConcept)
   return []
 }

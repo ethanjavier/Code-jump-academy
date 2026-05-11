@@ -10,6 +10,7 @@ import {
   TRACK_ICONS,
   type LearningLanguageId,
 } from './learningTracks'
+import type { PracticeDeepLink } from './appUrl'
 import {
   saveLearningLanguages,
   saveTrackPracticeMode,
@@ -18,7 +19,7 @@ import {
 
 type Props = {
   onContinueBlocks: () => void
-  onContinuePractice: () => void
+  onContinuePractice: (deep?: PracticeDeepLink | null) => void
 }
 
 type LangCardProps = {
@@ -90,7 +91,7 @@ export function LearningHub({ onContinueBlocks, onContinuePractice }: Props) {
     (lang: LearningLanguageId, mode: PracticeTrackMode) => {
       saveLearningLanguages([lang])
       saveTrackPracticeMode(lang, mode)
-      onContinuePractice()
+      onContinuePractice({ lang, pmode: mode })
     },
     [onContinuePractice],
   )

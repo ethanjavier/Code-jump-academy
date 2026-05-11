@@ -67,7 +67,6 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
           'TypeScript añade **tipos** sobre JavaScript. Las tres franjas son: tipar datos → comprobar con if → repetir con for.',
           'TypeScript adds **types** on top of JavaScript. The three stripes: type data → branch with if → repeat with for.',
         ),
-        introducesConcept: 'variable',
         exercise: {
           type: 'stripeChallenge',
           flagTitle: L('Objetivo: tipo → rama → bucle', 'Goal: type → branch → loop'),

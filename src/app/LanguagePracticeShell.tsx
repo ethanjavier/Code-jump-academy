@@ -2,7 +2,7 @@ import { Button, Segmented, Tag } from 'antd'
 import { motion } from 'framer-motion'
 import { Blocks, BookOpenText, Code2, Globe, House, LayoutGrid } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { getGuidedCourse, hasGuidedCourse } from '../courses/courseRegistry'
 import { useI18n } from '../i18n/I18nContext'
@@ -22,7 +22,14 @@ import {
   hasLanguagePractice,
   type LearningLanguageId,
 } from './learningTracks'
+import { LearnPracticeModeToggle } from './LearnPracticeModeToggle'
 import { MascotBubble } from './Mascot'
+import {
+  parseAppUrl,
+  replaceUrlSearch,
+  serializeAppUrl,
+  type PracticeDeepLink,
+} from './appUrl'
 
 function UiLocaleSwitch({ compact }: { compact?: boolean }) {
   const { t, locale, setLocale } = useI18n()
@@ -165,11 +172,17 @@ type GuidedSession = {
   lessonIndex: number
 }
 
+function resolvePracticeLang(urlLang: LearningLanguageId): LearningLanguageId | undefined {
+  const langs = loadLearningLanguages().filter((id): id is LearningLanguageId => hasLanguagePractice(id))
+  return langs.includes(urlLang) ? urlLang : undefined
+}
+
 /** Skip the practice overview and open the first guided lesson for the selected track (beginner mode only). */
-function tryInitialGuidedSession(): GuidedSession | null {
+function tryInitialGuidedSession(preferredLang?: LearningLanguageId): GuidedSession | null {
   const langs = loadLearningLanguages().filter((id): id is LearningLanguageId => hasLanguagePractice(id))
   if (langs.length === 0) return null
-  const lang = langs[0]!
+  const lang =
+    preferredLang && langs.includes(preferredLang) ? preferredLang : langs[0]!
   if (getTrackPracticeMode(lang) !== 'beginner') return null
   if (!hasGuidedCourse(lang)) return null
   const course = getGuidedCourse(lang)
@@ -177,12 +190,89 @@ function tryInitialGuidedSession(): GuidedSession | null {
   return { lang, lessonIndex: 0 }
 }
 
-export function LanguagePracticeShell({ onHome }: { onHome: () => void }) {
+function practiceBootstrapFromSearch(search: string): {
+  trackModes: Partial<Record<LearningLanguageId, PracticeTrackMode>>
+  guidedSession: GuidedSession | null
+  quizSession: QuizSession | null
+} {
+  const modes = loadTrackPracticeModes()
+  const { practice } = parseAppUrl(search)
+
+  if (!practice) {
+    return {
+      trackModes: modes,
+      guidedSession: tryInitialGuidedSession(),
+      quizSession: null,
+    }
+  }
+
+  const resolvedLang = practice.lang ? resolvePracticeLang(practice.lang) : undefined
+  if (practice.lang && !resolvedLang) {
+    return {
+      trackModes: modes,
+      guidedSession: tryInitialGuidedSession(),
+      quizSession: null,
+    }
+  }
+
+  if (practice.pmode && resolvedLang) {
+    saveTrackPracticeMode(resolvedLang, practice.pmode)
+    modes[resolvedLang] = practice.pmode
+  }
+
+  if (practice.overview) {
+    return { trackModes: modes, guidedSession: null, quizSession: null }
+  }
+
+  if (resolvedLang !== undefined && practice.lesson !== undefined) {
+    const course = getGuidedCourse(resolvedLang)
+    const max = Math.max(0, (course?.lessons.length ?? 1) - 1)
+    return {
+      trackModes: modes,
+      guidedSession: {
+        lang: resolvedLang,
+        lessonIndex: Math.min(max, practice.lesson),
+      },
+      quizSession: null,
+    }
+  }
+
+  if (resolvedLang !== undefined && practice.quiz !== undefined) {
+    const q = Math.min(PRACTICE_MODULE_COUNT - 1, Math.max(0, practice.quiz))
+    return {
+      trackModes: modes,
+      guidedSession: null,
+      quizSession: { lang: resolvedLang, moduleIndex: q },
+    }
+  }
+
+  return {
+    trackModes: modes,
+    guidedSession: tryInitialGuidedSession(resolvedLang),
+    quizSession: null,
+  }
+}
+
+export function LanguagePracticeShell({
+  onHome,
+  onLearn,
+}: {
+  onHome: () => void
+  onLearn: () => void
+}) {
   const { t, locale } = useI18n()
-  const [quizSession, setQuizSession] = useState<QuizSession | null>(null)
-  const [guidedSession, setGuidedSession] = useState<GuidedSession | null>(tryInitialGuidedSession)
-  const [trackModes, setTrackModes] = useState<Partial<Record<LearningLanguageId, PracticeTrackMode>>>(() =>
-    loadTrackPracticeModes(),
+  const boot =
+    typeof window !== 'undefined'
+      ? practiceBootstrapFromSearch(window.location.search)
+      : {
+          trackModes: loadTrackPracticeModes(),
+          guidedSession: tryInitialGuidedSession(),
+          quizSession: null as QuizSession | null,
+        }
+  const [quizSession, setQuizSession] = useState<QuizSession | null>(() => boot.quizSession)
+  const [guidedSession, setGuidedSession] = useState<GuidedSession | null>(() => boot.guidedSession)
+  const [trackModes, setTrackModes] = useState<Partial<Record<LearningLanguageId, PracticeTrackMode>>>(
+    () => boot.trackModes,
   )
 
   const modeFor = (lang: LearningLanguageId) => trackModes[lang] ?? 'beginner'
@@ -198,6 +288,48 @@ export function LanguagePracticeShell({ onHome }: { onHome: () => void }) {
     saveTrackPracticeMode(lang, mode)
     setTrackModes((prev) => ({ ...prev, [lang]: mode }))
   }
+
+  useEffect(() => {
+    const deep: PracticeDeepLink = {}
+    if (guidedSession) {
+      deep.lang = guidedSession.lang
+      deep.pmode = trackModes[guidedSession.lang] ?? 'beginner'
+      deep.lesson = guidedSession.lessonIndex
+      replaceUrlSearch(serializeAppUrl('practice', deep))
+      return
+    }
+    if (quizSession) {
+      deep.lang = quizSession.lang
+      deep.pmode = trackModes[quizSession.lang] ?? 'beginner'
+      deep.quiz = quizSession.moduleIndex
+      replaceUrlSearch(serializeAppUrl('practice', deep))
+      return
+    }
+    const langs = loadLearningLanguages().filter((id): id is LearningLanguageId => hasLanguagePractice(id))
+    const primary = langs[0]
+    if (primary) {
+      replaceUrlSearch(
+        serializeAppUrl('practice', {
+          lang: primary,
+          pmode: trackModes[primary] ?? 'beginner',
+          overview: true,
+        }),
+      )
+    } else {
+      replaceUrlSearch(serializeAppUrl('practice'))
+    }
+  }, [guidedSession, quizSession, trackModes])
+
+  useEffect(() => {
+    const onPop = () => {
+      const next = practiceBootstrapFromSearch(window.location.search)
+      setGuidedSession(next.guidedSession)
+      setQuizSession(next.quizSession)
+      setTrackModes(next.trackModes)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   const moduleIndices = useMemo(
     () => Array.from({ length: PRACTICE_MODULE_COUNT }, (_, i) => i),
@@ -229,6 +361,9 @@ export function LanguagePracticeShell({ onHome }: { onHome: () => void }) {
           >
             {t('nav.home')}
           </Button>
+          <div className="flex shrink-0 items-center border-l border-white/10 pl-3">
+            <LearnPracticeModeToggle value="practice" onLearn={onLearn} onPractice={() => {}} />
+          </div>
           <Button type="link" className="font-display text-slate-400 hover:!text-white" onClick={() => setGuidedSession(null)}>
             {t('practice.backToOverview')}
           </Button>
@@ -296,6 +431,9 @@ export function LanguagePracticeShell({ onHome }: { onHome: () => void }) {
           >
             {t('nav.home')}
           </Button>
+          <div className="flex shrink-0 items-center border-l border-white/10 pl-3">
+            <LearnPracticeModeToggle value="practice" onLearn={onLearn} onPractice={() => {}} />
+          </div>
           <Button type="link" className="font-display text-slate-400 hover:!text-white" onClick={() => setQuizSession(null)}>
             {t('practice.backToOverview')}
           </Button>
@@ -391,6 +529,9 @@ export function LanguagePracticeShell({ onHome }: { onHome: () => void }) {
         >
           {t('nav.home')}
         </Button>
+        <div className="flex shrink-0 items-center border-l border-white/10 pl-3">
+          <LearnPracticeModeToggle value="practice" onLearn={onLearn} onPractice={() => {}} />
+        </div>
         {practiceLangs.length > 0 ? (
           <div className="ml-auto flex shrink-0">
             <UiLocaleSwitch />
