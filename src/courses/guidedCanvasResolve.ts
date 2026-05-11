@@ -50,11 +50,8 @@ function fallbackRowsForConcept(concept: GuidedConceptKey): GuidedCanvasRow[] {
               'Como un cartel o el primer texto de una app — no cuadros vacíos sin sentido.',
               'Like a banner or the first line of an app — not meaningless empty boxes.',
             ),
-            preview: { type: 'stripes', colors: ['green'] },
           },
         ],
-        [{ kind: 'caption', text: L('Salida de texto', 'Text output') }],
-        [{ kind: 'terminal', line: L('Hola', 'Hello') }],
       ]
     case 'variable':
       return [

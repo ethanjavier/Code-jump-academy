@@ -22,7 +22,7 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-amber-500/25 bg-slate-900/80 p-3 shadow-lg shadow-black/30 ring-1 ring-amber-500/15 md:p-4">
+      <div className="rounded-3xl border border-amber-400/30 bg-gradient-to-br from-amber-950/50 via-slate-900/90 to-slate-950/95 p-3 shadow-xl shadow-amber-950/20 ring-1 ring-amber-500/20 md:p-4">
         <p className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wider text-amber-100">
           <span className="inline-flex size-7 items-center justify-center rounded-lg border border-amber-400/35 bg-amber-950/60">
             <Target className="size-4 text-amber-300" strokeWidth={iconStroke.soft} aria-hidden />
@@ -43,11 +43,10 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                     return (
                       <div
                         key={c}
-                        className="flex size-9 items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-800/80 sm:size-10"
+                        className="size-9 shrink-0 rounded-xl bg-slate-800/35 ring-1 ring-inset ring-white/5 sm:size-10"
                         title={t('visual.unpaintedCell')}
-                      >
-                        <span className="font-display text-[10px] font-semibold text-slate-500">—</span>
-                      </div>
+                        aria-hidden
+                      />
                     )
                   return (
                     <motion.div
@@ -55,7 +54,7 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
                       initial={{ scale: 0.82, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.03 * idx, type: 'spring', stiffness: 420, damping: 22 }}
-                      className={`flex size-9 items-center justify-center rounded-lg border border-white/15 shadow-md ring-1 ring-black/30 sm:size-10 ${COLOR_META[cell as ColorKey].tailwindClass}`}
+                      className={`flex size-9 items-center justify-center rounded-2xl border border-white/20 shadow-md ring-1 ring-black/25 sm:size-10 ${COLOR_META[cell as ColorKey].tailwindClass}`}
                       title={COLOR_META[cell as ColorKey].label}
                     />
                   )
@@ -67,7 +66,7 @@ export function InstructionVisualExample({ pattern, cols }: Props) {
       </div>
 
       {paintOrder.length > 1 ? (
-        <div className="rounded-2xl border border-cyan-500/25 bg-slate-900/75 p-3 shadow-lg shadow-black/25 ring-1 ring-cyan-500/15 md:p-4">
+        <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-cyan-950/40 via-slate-900/90 to-slate-950/95 p-3 shadow-xl shadow-cyan-950/25 ring-1 ring-cyan-500/20 md:p-4">
           <p className="mb-2 flex items-center gap-2 font-display text-[11px] font-bold uppercase tracking-wider text-cyan-100">
             <ListOrdered className="size-3.5 shrink-0 text-cyan-400" strokeWidth={iconStroke.soft} aria-hidden />
             {t('visual.paintOrder')}

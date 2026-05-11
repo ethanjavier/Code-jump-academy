@@ -27,11 +27,8 @@ export const PYTHON_GUIDED_COURSE: GuidedCourse = {
               'Objetivo real: texto útil en pantalla — como un cartel o el estado de un juego.',
               'Real goal: useful on-screen text — like a banner or a game status line.',
             ),
-            preview: { type: 'stripes', colors: ['green'] },
           },
         ],
-        [{ kind: 'caption', text: L('Salida estándar con print()', 'Standard output with print()') }],
-        [{ kind: 'terminal', line: L('Hola', 'Hello') }],
       ],
       exercise: {
         type: 'runCode',
@@ -55,9 +52,9 @@ export const PYTHON_GUIDED_COURSE: GuidedCourse = {
       title: { es: 'Variables', en: 'Variables' },
       instruction: {
         es:
-          'Asignas un nombre con `=` — como **Crear variable** en el lienzo. Los nombres suelen ir en `snake_case`.',
+          'Asignas un nombre con `=` — como **Crear variable** en el lienzo. Aquí **ordenarás fragmentos** hasta que la vista previa forme un programa válido: primero `pasos = 3`, luego `print(pasos)` usando el mismo nombre.',
         en:
-          'You assign a name with `=` — like **Create variable** on the canvas. Names often use `snake_case`.',
+          'You assign a name with `=` — like **Create variable** on the canvas. **Reorder fragments** until the preview forms valid code: first `steps = 3`, then `print(steps)` with the same name.',
       },
       introducesConcept: 'variable',
       canvasLienzo: [
@@ -113,12 +110,21 @@ export const PYTHON_GUIDED_COURSE: GuidedCourse = {
         ],
       ],
       exercise: {
-        type: 'orderLines',
-        lines: [
-          { es: 'pasos = 3', en: 'steps = 3' },
-          { es: 'print(pasos)', en: 'print(steps)' },
+        type: 'assembleLine',
+        tokens: [
+          { es: 'pasos', en: 'steps' },
+          { es: ' = ', en: ' = ' },
+          { es: '3', en: '3' },
+          { es: '\n', en: '\n' },
+          { es: 'print(', en: 'print(' },
+          { es: 'pasos', en: 'steps' },
+          { es: ')', en: ')' },
         ],
-        correctOrder: [0, 1],
+        correctOrder: [0, 1, 2, 3, 4, 5, 6],
+        wrongHint: {
+          es: 'Primero la asignación `pasos = 3`, después `print(pasos)` en una nueva línea.',
+          en: 'First the assignment `steps = 3`, then `print(steps)` on the next line.',
+        },
       },
     },
     {
@@ -180,6 +186,53 @@ export const PYTHON_GUIDED_COURSE: GuidedCourse = {
         wrongHint: {
           es: 'El bloque del `if` se marca solo con espacios/tabs al inicio de línea.',
           en: 'The `if` block is marked only with leading spaces/tabs.',
+        },
+      },
+    },
+    {
+      id: 'py-03b-run-checklist',
+      title: { es: 'Varias comprobaciones en la salida', en: 'Several checks in the output' },
+      instruction: {
+        es:
+          'Igual que en JavaScript, aquí la lista de **fragmentos** puede tener varias entradas: **todas** deben aparecer en la salida al comprobar. Ya tienes `x = 8`. Imprime **Hola** y, en otra línea, el valor de `x`.',
+        en:
+          'Like the JavaScript track, the **fragment** list can have several entries: **all** must appear in the output when you check. You already have `x = 8`. Print **Hello**, then the value of `x` on another line.',
+      },
+      introducesConcept: 'variable',
+      canvasLienzo: [
+        [
+          {
+            kind: 'realGoal',
+            headline: L(
+              'Dos pistas en la misma salida de print',
+              'Two clues in the same print output',
+            ),
+            detail: L(
+              'Texto fijo y valor de variable — la lección puede pedir más fragmentos según avanza.',
+              'Fixed text and a variable value — lessons can ask for more fragments as they go.',
+            ),
+          },
+        ],
+        [
+          { kind: 'varDecl', name: L('x', 'x'), value: 8 },
+          { kind: 'arrowHint' },
+          { kind: 'terminal', line: L('Hola\n8', 'Hello\n8') },
+        ],
+      ],
+      exercise: {
+        type: 'runCode',
+        runtime: 'python',
+        starter: {
+          es: 'x = 8\n# Dos líneas: primero Hola, luego el valor de x\n\n',
+          en: 'x = 8\n# Two lines: first Hello, then the value of x\n\n',
+        },
+        expectOutputIncludes: {
+          es: ['Hola', '8'],
+          en: ['Hello', '8'],
+        },
+        wrongHint: {
+          es: 'Ejemplo: print("Hola") y print(x) en líneas distintas.',
+          en: 'Example: print("Hello") and print(x) on separate lines.',
         },
       },
     },
@@ -287,6 +340,97 @@ export const PYTHON_GUIDED_COURSE: GuidedCourse = {
           { es: 'def doble(x):', en: 'def double(x):' },
         ],
         correctOrder: [1, 0],
+      },
+    },
+    {
+      id: 'py-06-array',
+      title: { es: 'Listas con índices', en: 'Lists with indexes' },
+      instruction: {
+        es:
+          'Una lista guarda muchos valores en **orden**. El índice empieza en 0 — la primera celda es `[0]`, la segunda es `[1]`.',
+        en:
+          'A list stores many values in **order**. Indexes start at 0 — the first slot is `[0]`, the second is `[1]`.',
+      },
+      introducesConcept: 'array_data',
+      canvasLienzo: [
+        [
+          {
+            kind: 'realGoal',
+            headline: L(
+              'Leer la celda correcta en una fila ordenada de colores',
+              'Read the right cell in an ordered row of colors',
+            ),
+            detail: L(
+              'Igual que elegir la segunda franja de una bandera: el índice importa.',
+              'Like choosing the second stripe of a flag: the index matters.',
+            ),
+            preview: { type: 'stripes', colors: ['red', 'green', 'blue'] },
+          },
+        ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'Una fila de celdas numeradas — parecido a recorrer columnas en el lienzo:',
+              'A row of numbered slots — like stepping across columns on the canvas:',
+            ),
+          },
+        ],
+        [
+          {
+            kind: 'arrayCells',
+            items: [L('rojo', 'red'), L('verde', 'green'), L('azul', 'blue')],
+          },
+        ],
+      ],
+      exercise: {
+        type: 'pickOne',
+        prompt: {
+          es: '¿Qué muestra `colores[1]` si `colores = ["rojo","verde","azul"]`?',
+          en: 'What does `colors[1]` show if `colors = ["red","green","blue"]`?',
+        },
+        options: [
+          { es: '"rojo"', en: '"red"' },
+          { es: '"verde"', en: '"green"' },
+          { es: '"azul"', en: '"blue"' },
+          { es: 'undefined', en: 'undefined' },
+        ],
+        correctIndex: 1,
+        wrongHint: {
+          es: 'El índice 1 es la segunda posición (0 es la primera).',
+          en: 'Index 1 is the second slot (0 is the first).',
+        },
+      },
+    },
+    {
+      id: 'py-07-review-order',
+      title: { es: 'Repaso: orden de ejecución', en: 'Review: execution order' },
+      instruction: {
+        es:
+          'Última parada del recorrido guiado en Python: el intérprete lee tu código **de arriba abajo**, salvo ramas (`if`), bucles (`for`) y llamadas a funciones.',
+        en:
+          'Last stop on the Python guided tour: the interpreter reads code **top to bottom**, except branches (`if`), loops (`for`), and function calls.',
+      },
+      exercise: {
+        type: 'pickOne',
+        prompt: {
+          es: '¿Qué idea describe mejor la ejecución lineal por defecto?',
+          en: 'Which idea best describes default linear execution?',
+        },
+        options: [
+          { es: 'Siempre se ejecuta todo a la vez', en: 'Everything runs at once' },
+          {
+            es: 'Las instrucciones siguen un orden salvo bucles o condiciones',
+            en: 'Statements follow an order except loops or conditions',
+          },
+          { es: 'Solo importa la última línea', en: 'Only the last line matters' },
+          { es: 'El orden es aleatorio', en: 'Order is random' },
+        ],
+        correctIndex: 1,
+        wrongHint: {
+          es: 'Piensa en leer una receta paso a paso.',
+          en: 'Think of reading a recipe step by step.',
+        },
       },
     },
   ],

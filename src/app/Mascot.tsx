@@ -74,7 +74,7 @@ export function MascotBubble({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className="pointer-events-auto relative rounded-2xl border-2 bg-slate-900/95 px-4 py-3 text-sm leading-snug text-slate-100 shadow-xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-md"
+            className="pointer-events-auto relative rounded-3xl border-2 bg-slate-900/95 px-4 py-3 text-sm leading-snug text-slate-100 shadow-xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-md"
             style={{ borderColor: stroke }}
           >
             <span

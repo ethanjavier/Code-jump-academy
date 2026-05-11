@@ -116,6 +116,20 @@ export const messages: Record<Locale, MessageDict> = {
     'practice.paletteQuizExplainer':
       'Outlined violet buttons open **track quizzes** (five modules per language).',
     'practice.paletteFooter': 'Every language follows this pattern so practice stays consistent.',
+    'practice.langPalette.intro':
+      'Each card is a small code snippet for this track — tap to copy. Your exercise stays in the center column.',
+    'practice.langPalette.introInsert':
+      'Small code snippets — tap to insert at the cursor, or into the scratch pad for reorder or multiple-choice lessons.',
+    'practice.paletteCode.intro':
+      'This lesson’s snippets only — tap a card to insert at the cursor (typing from the keyboard is turned off).',
+    'practice.paletteCode.introInsert':
+      'Lesson snippets — tap to insert. Use Backspace to fix; new lines come from the “New line” card.',
+    'practice.langPalette.group.output': 'Output',
+    'practice.langPalette.group.variables': 'Variables',
+    'practice.langPalette.group.control': 'Flow control',
+    'practice.langPalette.group.types': 'Types',
+    'practice.langPalette.group.data': 'Data',
+    'practice.langPalette.group.functions': 'Functions',
     'practice.mascotTip':
       'Use the center column like your workspace: open a language card, then choose a lesson or quiz module.',
 
@@ -135,13 +149,43 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.newIdea': 'New idea — read this before coding',
     'guided.yourTurn': 'Your turn',
     'guided.orderHint': 'Put the lines in runnable order (top = first to execute). Use the arrows.',
+    'guided.assembleLineGoal':
+      'Reorder every fragment until the preview reads as one valid program (declare the value, then use the name).',
+    'guided.assembleLineWorkspaceHint':
+      'Each row is a piece of the line (or a new line). Use the arrows; the green preview updates as you go.',
+    'guided.assembledLinePreview': 'Preview',
     'guided.moveUp': 'Move line up',
     'guided.moveDown': 'Move line down',
     'guided.tryReorder': 'Not quite — reorder so the program runs from top to bottom.',
     'guided.checkOrder': 'Check order',
     'guided.checkAnswer': 'Check answer',
     'guided.checkOutput': 'Check output',
+    'guided.checkPaletteCode': 'Check program',
+    'guided.paletteCodePreviewHint':
+      'Your program appears in the center — insert lines only from the palette on the right.',
+    'guided.paletteCodeEditorAria': 'Program built from palette snippets only',
+    'guided.paletteCodeLiveCanvasTitle': 'Live preview — your lines as stripes',
+    'guided.paletteCodeLiveCanvasFoot':
+      'Each stripe lights up when that line matches the goal. Open the large view anytime from the toolbar.',
+    'guided.paletteCodeOpenModal': 'Large preview',
+    'guided.paletteCodeModalTitle': 'Your program as a flow',
+    'guided.paletteCodeModalBody':
+      'This is the three-step flow you built. Each band matches one line of code!',
+    'guided.paletteCodeModalClose': 'Got it',
+    'guided.paletteCodeModalRestart': 'Restart exercise',
+    'guided.paletteCodeCanvasHeroAria': 'Interactive preview — tap to play with the word',
+    'guided.paletteCodeCanvasHeroLit': 'Nice — your first line matches. Keep building below.',
+    'guided.paletteCodeCanvasHeroDim': 'Complete the first line of code below — then this lights up.',
+    'guided.paletteCodeCanvasHeroTap': 'Tap the word — it’s what your program is “saying”.',
+    'guided.paletteCodeCanvasHeroCelebrate': 'You did it — your code matches the goal. Tap the word to play!',
+    'guided.paletteCodeCanvasAwait':
+      'Build your program in the center, then tap Check program. Your picture unlocks here when every line matches!',
+    'guided.paletteCodeHeroSqlAria': 'Visual funnel: SELECT, then FROM, then WHERE — match your three lines below.',
+    'guided.paletteCodeHeroHtmlAria': 'Layers: HTML tag, visible text, then a CSS color rule — match your three lines below.',
     'guided.runHintEditor': 'Edit the code, press Run to see output, then Check output when it matches the goal.',
+    'guided.scratchTitle': 'Snippet scratch pad',
+    'guided.scratchHint':
+      'Tap palette cards to insert snippets here — handy while you reorder lines or pick an answer.',
     'guided.pythonFirstLoad': 'The first Python run downloads the runtime; it may take a little while.',
     'guided.nice': 'Nice!',
     'guided.lessonDone': 'Lesson complete.',
@@ -167,6 +211,24 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.resetExercise': 'Clear',
     'guided.resetOutput': 'Clear output',
     'guided.expectedFragments': 'Your output should include:',
+    'guided.expectFragmentsExplainer':
+      'After Run, we read everything in the output box together with any error text. The fragments below are your checklist: for Check output to pass, each fragment must appear somewhere in that combined text (unless the lesson says otherwise). Later lessons often add more fragments to the list as the goal grows.',
+    'guided.paletteSnippetsExplainer':
+      'The snippets below are the only pieces you can insert from the palette. Tap cards to build your program line by line until it matches the goal when you check. Longer lessons add more rows here as new names, literals, or lines appear.',
+    'guided.goalOrderLinesExplainer':
+      'Each row is a full line of code. Reorder until the program would run correctly from top to bottom.',
+    'guided.goalAssembleExplainer':
+      'Each row is a small token (word or punctuation). Reorder until they concatenate into one valid line of code.',
+    'guided.goalStripeExplainer':
+      'Each stripe is one step in the program’s story. Reorder until the flow matches how the code should execute.',
+    'guided.goalPickOneExplainer':
+      'Read the question carefully, then pick the answer that matches the idea the lesson is testing.',
+    'guided.hintButton': 'Hint',
+    'guided.hintButtonAria': 'Show or hide a hint for this step',
+    'guided.runCodeParsonsWorkspaceHint':
+      'Reorder the lines (top = first to run). Press Run, then Check output — your program is built only from these rows.',
+    'guided.orderLinesManualHint':
+      'Tip: read each line like a sentence. Declarations and setup usually come before lines that use those names or results.',
     'guided.mascotTip': 'Order matters — lines run top to bottom, just like statements in real code.',
     'guided.goalPickOne': 'Pick the option that best matches the prompt.',
     'practice.modeBeginner': 'Beginner',
@@ -199,6 +261,7 @@ export const messages: Record<Locale, MessageDict> = {
     'workspace.repeatWith': 'Repeat {{label}}',
     'workspace.destination': 'Target:',
     'workspace.mainProgram': 'Main program',
+    'workspace.paletteOnlyEditor': 'Palette inserts only — tap cards on the right',
     'workspace.insideRepeat': 'Inside Repeat (back to root)',
     'workspace.canvasHint':
       'Striped on the goal = empty cell. Use {{skip}} to advance without color.',
@@ -423,6 +486,20 @@ export const messages: Record<Locale, MessageDict> = {
     'practice.paletteQuizExplainer':
       'Los botones violeta con borde abren los **tests por lenguaje** (cinco módulos por idioma).',
     'practice.paletteFooter': 'Todas las rutas siguen este patrón para que la práctica sea coherente.',
+    'practice.langPalette.intro':
+      'Cada tarjeta es un fragmento de código de esta ruta: pulsa para copiar. El ejercicio sigue en la columna central.',
+    'practice.langPalette.introInsert':
+      'Fragmentos de código: pulsa para insertar en el cursor o en el borrador si la lección es ordenar o test.',
+    'practice.paletteCode.intro':
+      'Solo los fragmentos de esta lección: pulsa una tarjeta para insertar en el cursor (el teclado no escribe letras).',
+    'practice.paletteCode.introInsert':
+      'Fragmentos de la lección: pulsa para insertar. Usa Retroceso para corregir; las líneas nuevas van con la tarjeta «Nueva línea».',
+    'practice.langPalette.group.output': 'Salida',
+    'practice.langPalette.group.variables': 'Variables',
+    'practice.langPalette.group.control': 'Control de flujo',
+    'practice.langPalette.group.types': 'Tipos',
+    'practice.langPalette.group.data': 'Datos',
+    'practice.langPalette.group.functions': 'Funciones',
     'practice.mascotTip':
       'Usa la columna central como tu espacio de trabajo: abre una tarjeta de idioma y elige lección o test.',
 
@@ -443,14 +520,47 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.yourTurn': 'Tu turno',
     'guided.orderHint':
       'Ordena las líneas como programa ejecutable (arriba = lo primero que corre). Usa las flechas.',
+    'guided.assembleLineGoal':
+      'Reordena cada fragmento hasta que la vista previa sea un programa válido (primero declaras el valor, luego usas el nombre).',
+    'guided.assembleLineWorkspaceHint':
+      'Cada fila es un trozo de código (o un salto de línea). Usa las flechas; la vista previa verde se actualiza.',
+    'guided.assembledLinePreview': 'Vista previa',
     'guided.moveUp': 'Subir línea',
     'guided.moveDown': 'Bajar línea',
     'guided.tryReorder': 'Casi — reordena para que el programa corra de arriba abajo.',
     'guided.checkOrder': 'Comprobar orden',
     'guided.checkAnswer': 'Comprobar respuesta',
     'guided.checkOutput': 'Comprobar salida',
+    'guided.checkPaletteCode': 'Comprobar programa',
+    'guided.paletteCodePreviewHint':
+      'Tu programa va en el centro: monta las líneas solo con la paleta de la derecha.',
+    'guided.paletteCodeEditorAria': 'Programa construido solo con fragmentos de la paleta',
+    'guided.paletteCodeLiveCanvasTitle': 'Vista previa en vivo — tus líneas como franjas',
+    'guided.paletteCodeLiveCanvasFoot':
+      'Cada franja se enciende cuando esa línea coincide con el objetivo. Abre la vista grande cuando quieras desde la barra.',
+    'guided.paletteCodeOpenModal': 'Vista grande',
+    'guided.paletteCodeModalTitle': 'Tu programa como flujo',
+    'guided.paletteCodeModalBody':
+      'Este es el flujo de tres pasos que construiste. ¡Cada banda coincide con una línea de código!',
+    'guided.paletteCodeModalClose': 'Entendido',
+    'guided.paletteCodeModalRestart': 'Reiniciar ejercicio',
+    'guided.paletteCodeCanvasHeroAria': 'Vista previa interactiva — pulsa la palabra',
+    'guided.paletteCodeCanvasHeroLit': 'Bien — tu primera línea coincide. Sigue abajo.',
+    'guided.paletteCodeCanvasHeroDim': 'Completa la primera línea de código abajo — esto se encenderá.',
+    'guided.paletteCodeCanvasHeroTap': 'Pulsa la palabra: es lo que tu programa “dice”.',
+    'guided.paletteCodeCanvasHeroCelebrate':
+      '¡Lo lograste! Tu código coincide con el objetivo. Pulsa la palabra para jugar un poco.',
+    'guided.paletteCodeCanvasAwait':
+      'Arma tu programa en el centro y pulsa Comprobar programa. ¡Tu imagen aparece aquí cuando todas las líneas coincidan!',
+    'guided.paletteCodeHeroSqlAria':
+      'Embudo visual: SELECT, luego FROM, luego WHERE — igual que tus tres líneas abajo.',
+    'guided.paletteCodeHeroHtmlAria':
+      'Capas: etiqueta HTML, texto visible y regla CSS de color — igual que tus tres líneas abajo.',
     'guided.runHintEditor':
       'Edita el código, pulsa Ejecutar para ver la salida y Comprobar salida cuando cumpla el objetivo.',
+    'guided.scratchTitle': 'Borrador de fragmentos',
+    'guided.scratchHint':
+      'Pulsa la paleta para insertar fragmentos aquí — útil mientras ordenas líneas o eliges respuesta.',
     'guided.pythonFirstLoad': 'La primera vez que ejecutas Python se descarga el motor; puede tardar un poco.',
     'guided.nice': '¡Muy bien!',
     'guided.lessonDone': 'Lección completada.',
@@ -476,6 +586,24 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.resetExercise': 'Limpiar',
     'guided.resetOutput': 'Borrar salida',
     'guided.expectedFragments': 'Tu salida debe incluir:',
+    'guided.expectFragmentsExplainer':
+      'Después de Ejecutar, leemos todo lo que aparece en la caja de salida junto con el texto de error, si lo hay. Los fragmentos de abajo son tu lista: para que Comprobar salida funcione, cada fragmento debe aparecer en algún sitio de ese texto combinado (salvo que la lección diga otra cosa). En lecciones posteriores suele haber más fragmentos en la lista a medida que el objetivo crece.',
+    'guided.paletteSnippetsExplainer':
+      'Los fragmentos de abajo son las únicas piezas que puedes insertar desde la paleta. Pulsa las tarjetas y arma tu programa línea a línea hasta que coincida con el objetivo al comprobar. En lecciones más largas verás más filas aquí cuando entren nombres, literales o líneas nuevas.',
+    'guided.goalOrderLinesExplainer':
+      'Cada fila es una línea de código completa. Reordena hasta que el programa tenga sentido de arriba abajo al ejecutarse.',
+    'guided.goalAssembleExplainer':
+      'Cada fila es un token pequeño (palabra o signo). Reordena hasta que, al leerlos en orden, formen una línea de código válida.',
+    'guided.goalStripeExplainer':
+      'Cada franja es un paso en la historia del programa. Reordena hasta que el flujo coincida con cómo debería ejecutarse el código.',
+    'guided.goalPickOneExplainer':
+      'Lee bien la pregunta y elige la respuesta que encaje con la idea que la lección está comprobando.',
+    'guided.hintButton': 'Pista',
+    'guided.hintButtonAria': 'Mostrar u ocultar una pista para este paso',
+    'guided.runCodeParsonsWorkspaceHint':
+      'Reordena las líneas (arriba = primero en ejecutarse). Pulsa Ejecutar y luego Comprobar salida — tu programa son solo estas filas.',
+    'guided.orderLinesManualHint':
+      'Consejo: lee cada línea como una frase. Las declaraciones y preparación suelen ir antes de las líneas que usan esos nombres o resultados.',
     'guided.mascotTip': 'El orden importa: las líneas corren de arriba abajo, igual que las sentencias en código real.',
     'guided.goalPickOne': 'Elige la opción que encaje mejor con la pregunta.',
     'practice.modeBeginner': 'Principiante',
@@ -508,6 +636,7 @@ export const messages: Record<Locale, MessageDict> = {
     'workspace.repeatWith': 'Repetir {{label}}',
     'workspace.destination': 'Destino:',
     'workspace.mainProgram': 'Programa principal',
+    'workspace.paletteOnlyEditor': 'Solo inserciones de paleta — usa las tarjetas de la derecha',
     'workspace.insideRepeat': 'Dentro del Repetir (volver a raíz)',
     'workspace.canvasHint':
       'Rayado en la meta = hueco sin pintar. Usa {{skip}} para avanzar sin color.',

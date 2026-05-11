@@ -4,6 +4,7 @@ import {
   difficultyForChapter,
   varNamesForChapter,
 } from '../types/level'
+import { pedagogyForTemplate } from './levelPedagogy'
 import type { ColorKey } from '../engine/blocks'
 
 import {
@@ -474,10 +475,27 @@ export function buildLevel(chapterIndex: number, puzzleIndex: number): Level {
   instructionEs = envoltorioInstruccionesBloques(instructionEs, 'es')
   instructionEn = envoltorioInstruccionesBloques(instructionEn, 'en')
 
+  const hasSkip = targetPattern.some((c) => c === 'skip')
+  const pedagogy = pedagogyForTemplate(t, {
+    chapterIndex,
+    puzzleIndex,
+    showRepeat: useRepeat,
+    hasSkipInPattern: hasSkip,
+    showVars: Boolean(varNames?.length),
+  })
+
   return {
     id,
     instructionEs,
     instructionEn,
+    conceptEs: pedagogy.conceptEs,
+    conceptEn: pedagogy.conceptEn,
+    explanationEs: pedagogy.explanationEs,
+    explanationEn: pedagogy.explanationEn,
+    hintEs: pedagogy.hintEs,
+    hintEn: pedagogy.hintEn,
+    storyGoalEs: pedagogy.storyGoalEs,
+    storyGoalEn: pedagogy.storyGoalEn,
     targetPattern,
     gridCols: cols,
     allowedBlocks,

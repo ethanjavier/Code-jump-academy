@@ -89,10 +89,10 @@ export function BlockPalette({
                 key={b.id}
                 type="button"
                 disabled={disabled}
-                whileHover={{ scale: disabled ? 1 : 1.02 }}
-                whileTap={{ scale: disabled ? 1 : 0.98 }}
+                whileHover={{ scale: disabled ? 1 : 1.03 }}
+                whileTap={{ scale: disabled ? 1 : 0.95 }}
                 onClick={() => onPick(b.id)}
-                className="flex flex-col items-start rounded-2xl border border-slate-600/80 bg-slate-900/90 px-3 py-2.5 text-left text-sm text-slate-100 shadow-md shadow-black/30 transition hover:border-indigo-400/45 hover:bg-slate-800/95 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex flex-col items-start rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600/35 via-violet-600/25 to-slate-900/90 px-3 py-2.5 text-left text-sm text-slate-100 shadow-lg shadow-indigo-950/40 ring-1 ring-indigo-400/20 transition hover:border-fuchsia-400/35 hover:from-indigo-500/45 hover:via-violet-500/35 hover:shadow-indigo-900/50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span className="font-code text-xs font-medium text-indigo-300">{b.label}</span>
                 <span className="text-[11px] text-slate-400">{paletteDescription(b.id, t)}</span>
@@ -111,7 +111,7 @@ export function EmptyWorkspaceHint() {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border border-dashed border-indigo-500/35 bg-slate-950/60 px-4 py-8 text-center ring-1 ring-indigo-500/20"
+      className="flex min-h-[140px] flex-col items-center justify-center rounded-3xl border border-dashed border-indigo-400/40 bg-gradient-to-b from-indigo-950/40 to-slate-950/70 px-4 py-8 text-center ring-1 ring-violet-500/25"
     >
       <Braces className="mb-2 size-9 text-indigo-400" strokeWidth={iconStroke.soft} aria-hidden />
       <p className="text-sm font-medium text-slate-100">{t('blocks.emptyTitle')}</p>
@@ -250,17 +250,17 @@ export function BlockListView({
             initial={{ opacity: 0, scale: 0 }}
             animate={{
               opacity: 1,
-              scale: [0, 1.12, 1],
+              scale: [0, 1.1, 1],
             }}
             exit={{ opacity: 0, height: 0 }}
             transition={{
               opacity: { duration: 0.2 },
-              scale: { type: 'spring', stiffness: 460, damping: 14 },
+              scale: { type: 'spring', stiffness: 520, damping: 16 },
               layout: { type: 'spring', stiffness: 380, damping: 28 },
             }}
-            className={`rounded-2xl border border-slate-600/90 bg-slate-900/85 shadow-lg shadow-black/25 ${
+            className={`rounded-3xl border border-indigo-500/25 bg-gradient-to-br from-slate-900/95 via-indigo-950/55 to-slate-950/95 shadow-lg shadow-violet-950/30 ring-1 ring-white/5 ${
               node.kind === 'repeat' && activeInsertId === node.id
-                ? 'border-emerald-400/70 ring-2 ring-emerald-500/35'
+                ? 'border-emerald-400/70 ring-2 ring-emerald-400/40'
                 : ''
             }`}
           >
@@ -413,7 +413,7 @@ export function BlockListView({
               <motion.button
                 type="button"
                 aria-label={t('blocks.deleteBlock')}
-                whileTap={{ scale: 0.92 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={(e) => {
                   e.stopPropagation()
                   onRemove(node.id)

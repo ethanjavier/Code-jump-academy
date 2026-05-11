@@ -30,11 +30,8 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
               'Objetivo real: texto visible — como el rótulo de un proyecto o el título de una pantalla.',
               'Real goal: visible text — like a project banner or a screen title.',
             ),
-            preview: { type: 'stripes', colors: ['green'] },
           },
         ],
-        [{ kind: 'caption', text: L('Salida de texto (consola del navegador)', 'Text output (browser console)') }],
-        [{ kind: 'terminal', line: L('Hola', 'Hello') }],
       ],
       exercise: {
         type: 'runCode',
@@ -61,9 +58,9 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
       instruction: {
         es:
-          'Igual que **Crear variable** en bloques, en JavaScript guardas un número o texto en un nombre con `let` o `const`. Luego puedes usar ese nombre en la siguiente línea.',
+          'Igual que **Crear variable** en bloques, en JavaScript guardas un valor con `const`. Aquí sigues con **código real**: **ordenarás fragmentos** (palabra clave, nombre, números, signos…) en **Tu código** hasta que la **Vista previa** muestre un programa válido.\n\nObjetivo: primero declaras `const pasos = 4;`, luego usas el mismo nombre en `console.log`; cuando encaje, pulsa **Comprobar orden**.',
         en:
-          'Just like **Create variable** on the canvas, in JavaScript you store a number or text in a name with `let` or `const`. Then you use that name on the next lines.',
+          'Like **Create variable** on blocks, in JavaScript you store a value with `const`. This is still **real code**: **reorder fragments** (keyword, name, numbers, punctuation…) in **Your code** until the **Preview** shows valid code.\n\nGoal: first declare `const steps = 4;`, then use the same name in `console.log`; when it lines up, press **Check order**.',
       },
       introducesConcept: 'variable',
       canvasLienzo: [
@@ -119,12 +116,22 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
         ],
       ],
       exercise: {
-        type: 'orderLines',
-        lines: [
-          { es: 'console.log(pasos);', en: 'console.log(steps);' },
-          { es: 'const pasos = 4;', en: 'const steps = 4;' },
+        type: 'assembleLine',
+        tokens: [
+          { es: 'const ', en: 'const ' },
+          { es: 'pasos', en: 'steps' },
+          { es: ' = ', en: ' = ' },
+          { es: '4', en: '4' },
+          { es: ';\n', en: ';\n' },
+          { es: 'console.log(', en: 'console.log(' },
+          { es: 'pasos', en: 'steps' },
+          { es: ');', en: ');' },
         ],
-        correctOrder: [1, 0],
+        correctOrder: [0, 1, 2, 3, 4, 5, 6, 7],
+        wrongHint: {
+          es: 'Orden: primero la declaración `const pasos = 4;`, después la llamada que imprime el mismo nombre.',
+          en: 'Order: first the declaration `const steps = 4;`, then the call that prints the same name.',
+        },
       },
     },
     {
@@ -135,9 +142,9 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
       instruction: {
         es:
-          'A veces solo quieres ejecutar código **si** se cumple algo. El orden importa: primero decides, luego actúas.',
+          'En bloques, una **condición** elige un camino u otro; en JavaScript, **`if` / `else`** hace lo mismo con código real. Lee el fragmento de arriba a abajo: primero la condición, luego solo una rama se ejecuta.\n\nObjetivo: en **Tu código** lee la pregunta, marca la opción correcta y pulsa **Comprobar respuesta**.',
         en:
-          'Sometimes you only run code **if** something is true. Order matters: decide first, then act.',
+          'On blocks, a **condition** picks one path or another; in JavaScript, **`if` / `else`** does that with real code. Read the snippet top to bottom: condition first, then only one branch runs.\n\nGoal: in **Your code** read the question, pick the right option, then press **Check answer**.',
       },
       introducesConcept: 'if_branch',
       canvasLienzo: [
@@ -172,6 +179,18 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
             elseLine: L('console.log("Adios")', 'console.log("Bye")'),
           },
         ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'Solo una rama llega a la salida — como un único color ganador en el lienzo:',
+              'Only one branch reaches the output — like a single winning color on the canvas:',
+            ),
+          },
+        ],
+        [
+          { kind: 'terminal', line: L('Hola', 'Hi') },
+        ],
       ],
       exercise: {
         type: 'pickOne',
@@ -195,6 +214,79 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
     },
     {
+      id: 'js-03b-run-checklist',
+      title: {
+        es: 'Varias comprobaciones en la salida',
+        en: 'Several checks in the output',
+      },
+      instruction: {
+        es:
+          'Aquí sigues con **código real** que se ejecuta línea a línea. A veces el panel **Objetivo** lista **varios fragmentos**: al **Comprobar salida**, **todos** deben aparecer en la caja (junto con la salida de **Ejecutar** y el error, si lo hay).\n\nYa tienes `let x = 8;`. Objetivo: **Ejecutar** y conseguir primero **Hola** y, en otra línea, el valor de `x`; luego **Comprobar salida**.',
+        en:
+          'This is still **real code** running line by line. Sometimes the **Goal** panel lists **several fragments**: when you **Check output**, **all** of them must appear in the box (together with **Run** output and any error).\n\nYou already have `let x = 8;`. Goal: **Run** so you print **Hi** first, then the value of `x` on another line; then **Check output**.',
+      },
+      introducesConcept: 'variable',
+      canvasLienzo: [
+        [
+          {
+            kind: 'realGoal',
+            headline: L(
+              'Comprobar dos pistas en la misma salida',
+              'Check two clues in the same output',
+            ),
+            detail: L(
+              'Como revisar dos etiquetas en el lienzo antes de pasar de nivel.',
+              'Like checking two labels on the canvas before leveling up.',
+            ),
+          },
+        ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'La lista de fragmentos puede crecer con la lección — cada uno es una mini meta:',
+              'The fragment list can grow with the lesson — each one is a mini goal:',
+            ),
+          },
+        ],
+        [
+          { kind: 'varDecl', name: L('x', 'x'), value: 8 },
+          { kind: 'arrowHint' },
+          { kind: 'terminal', line: L('Hola\n8', 'Hi\n8') },
+        ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'Dos líneas en consola — texto fijo y valor leído del nombre guardado:',
+              'Two console lines — fixed text and the value read from the saved name:',
+            ),
+          },
+        ],
+        [
+          { kind: 'drawBox', color: 'green' },
+          { kind: 'newLine' },
+          { kind: 'drawBox', color: 'blue' },
+        ],
+      ],
+      exercise: {
+        type: 'runCode',
+        runtime: 'javascript',
+        starter: {
+          es: 'let x = 8;\n// Dos líneas: primero Hola, luego el valor de x (usa console.log dos veces)\n\n',
+          en: 'let x = 8;\n// Two lines: first Hi, then the value of x (use console.log twice)\n\n',
+        },
+        expectOutputIncludes: {
+          es: ['Hola', '8'],
+          en: ['Hi', '8'],
+        },
+        wrongHint: {
+          es: 'Ejemplo: console.log("Hola"); y luego console.log(x); — ejecuta y mira que salgan las dos líneas.',
+          en: 'Example: console.log("Hi"); then console.log(x); — run and confirm you see both lines.',
+        },
+      },
+    },
+    {
       id: 'js-04-for-loop',
       title: {
         es: 'Repetir con for',
@@ -202,9 +294,9 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
       instruction: {
         es:
-          'En bloques usas **Repetir** para no copiar lo mismo muchas veces. Aquí el **`for`** repite el cuerpo `{ ... }` varias veces. Lee el panel “Idea nueva” antes de ordenar las líneas.',
+          'En bloques usas **Repetir** para no copiar lo mismo muchas veces; en JavaScript el **`for`** repite el cuerpo `{ ... }` varias veces. Lee también el panel **Idea nueva** arriba si aparece.\n\nObjetivo: en **Tu código** **ordenarás líneas** con las flechas hasta que arriba quede lo primero que debe ejecutarse (abajo = después). Luego pulsa **Comprobar orden**.',
         en:
-          'On blocks you use **Repeat** to avoid pasting the same thing many times. Here a **`for`** repeats the `{ ... }` body several times. Read the “New idea” panel before ordering lines.',
+          'On blocks you use **Repeat** to avoid pasting the same thing many times; in JavaScript a **`for`** repeats the `{ ... }` body several times. Read the **New idea** panel above when it shows.\n\nGoal: in **Your code** **reorder lines** with the arrows until the top line runs first (bottom runs later). Then press **Check order**.',
       },
       introducesConcept: 'repeat_loop',
       canvasLienzo: [
@@ -242,6 +334,19 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
             ],
           },
         ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'Arriba el `for`; debajo, indentado, lo que se ejecuta en cada vuelta:',
+              '`for` on top; below, indented — what runs each turn:',
+            ),
+          },
+        ],
+        [
+          { kind: 'drawBox', color: 'indigo' },
+          { kind: 'drawBox', color: 'indigo' },
+        ],
       ],
       exercise: {
         type: 'orderLines',
@@ -261,9 +366,9 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
       instruction: {
         es:
-          'Cuando un conjunto de pasos tiene sentido junto, lo envuelves en una **función** con nombre. Así lo llamas cuando lo necesitas, como un mini programa reutilizable.',
+          'Cuando un conjunto de pasos tiene sentido junto, lo envuelves en una **función** con nombre — **código real** que puedes llamar cuando quieras.\n\nObjetivo: en **Tu código** **ordenarás líneas** con las flechas (cabecera `function` primero, cuerpo con `return` después) y pulsa **Comprobar orden**.',
         en:
-          'When a set of steps belongs together, wrap them in a named **function**. Then you call it when you need it — a reusable mini program.',
+          'When steps belong together, wrap them in a named **function** — **real code** you can call anytime.\n\nGoal: in **Your code** **reorder lines** with the arrows (`function` header first, body with `return` next) and press **Check order**.',
       },
       introducesConcept: 'function_block',
       canvasLienzo: [
@@ -301,6 +406,19 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
             ],
           },
         ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'La cabecera `function` arriba; dentro, indentado, lo que calcula y devuelve:',
+              'The `function` header on top; indented inside is what computes and returns:',
+            ),
+          },
+        ],
+        [
+          { kind: 'drawBox', color: 'yellow' },
+          { kind: 'drawBox', color: 'red' },
+        ],
       ],
       exercise: {
         type: 'orderLines',
@@ -320,9 +438,9 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
       },
       instruction: {
         es:
-          'Un array guarda muchos valores en **orden**. El índice empieza en 0 — como contar celdas en una fila desde la izquierda.',
+          'Un **array** guarda muchos valores en **orden**; el índice empieza en 0 — como contar celdas en una fila desde la izquierda.\n\nObjetivo: en **Tu código** lee la pregunta, elige la opción correcta y pulsa **Comprobar respuesta**.',
         en:
-          'An array stores many values in **order**. Indexes start at 0 — like counting cells in a row from the left.',
+          'An **array** stores values in **order**; indexes start at 0 — like counting cells in a row from the left.\n\nGoal: in **Your code** read the question, pick the right option, then press **Check answer**.',
       },
       introducesConcept: 'array_data',
       canvasLienzo: [
@@ -355,6 +473,18 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
             items: [L('rojo', 'red'), L('verde', 'green'), L('azul', 'blue')],
           },
         ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              '`[0]` es la primera celda, `[1]` la segunda — siempre desde la izquierda:',
+              '`[0]` is the first slot, `[1]` the second — always from the left:',
+            ),
+          },
+        ],
+        [
+          { kind: 'terminal', line: L('[1] → 2.ª celda', '[1] → 2nd cell') },
+        ],
       ],
       exercise: {
         type: 'pickOne',
@@ -372,6 +502,70 @@ export const JAVASCRIPT_GUIDED_COURSE: GuidedCourse = {
         wrongHint: {
           es: 'El índice 1 es la segunda posición (0 es la primera).',
           en: 'Index 1 is the second slot (0 is the first).',
+        },
+      },
+    },
+    {
+      id: 'js-07-review-order',
+      title: {
+        es: 'Repaso: orden de ejecución',
+        en: 'Review: execution order',
+      },
+      instruction: {
+        es:
+          'Última parada del recorrido guiado en JavaScript: el programa se lee **de arriba abajo**, salvo ramas (`if` / `else`), bucles (`for`) y cuando llamas a una **función**.\n\nObjetivo: en **Tu código** elige la mejor descripción y pulsa **Comprobar respuesta**.',
+        en:
+          'Last stop on the JavaScript guided tour: code runs **top to bottom**, except branches (`if` / `else`), loops (`for`), and when you call a **function**.\n\nGoal: in **Your code** pick the best description and press **Check answer**.',
+      },
+      canvasLienzo: [
+        [
+          {
+            kind: 'realGoal',
+            headline: L(
+              'Leer tu código como una receta: paso a paso',
+              'Read your code like a recipe: step by step',
+            ),
+            detail: L(
+              'Si algo va mal, suele ser el orden o una condición.',
+              'When something breaks, it is often order or a condition.',
+            ),
+            preview: { type: 'stripes', colors: ['green', 'yellow', 'blue'] },
+          },
+        ],
+        [
+          {
+            kind: 'caption',
+            text: L(
+              'Instrucciones encadenadas — como bloques uno tras otro en el lienzo:',
+              'Chained instructions — like blocks one after another on the canvas:',
+            ),
+          },
+        ],
+        [
+          { kind: 'drawBox', color: 'green' },
+          { kind: 'skip' },
+          { kind: 'drawBox', color: 'blue' },
+        ],
+      ],
+      exercise: {
+        type: 'pickOne',
+        prompt: {
+          es: '¿Qué idea describe mejor la ejecución lineal por defecto?',
+          en: 'Which idea best describes default linear execution?',
+        },
+        options: [
+          { es: 'Siempre se ejecuta todo a la vez', en: 'Everything runs at once' },
+          {
+            es: 'Las instrucciones siguen un orden salvo bucles o condiciones',
+            en: 'Statements follow an order except loops or conditions',
+          },
+          { es: 'Solo importa la última línea', en: 'Only the last line matters' },
+          { es: 'El orden es aleatorio', en: 'Order is random' },
+        ],
+        correctIndex: 1,
+        wrongHint: {
+          es: 'Piensa en leer una receta paso a paso.',
+          en: 'Think of reading a recipe step by step.',
         },
       },
     },

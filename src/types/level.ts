@@ -8,6 +8,18 @@ export interface Level {
   instructionEs: string
   /** Puzzle directions (English) */
   instructionEn: string
+  /** Nombre corto del concepto pedagógico (p. ej. Secuenciación, Iteración). */
+  conceptEs: string
+  conceptEn: string
+  /** Por qué importa este ejercicio (tono cercano; puede usar **negritas** para resaltar términos). */
+  explanationEs: string
+  explanationEn: string
+  /** Pista si falla el patrón o se atasca (se usa en modal y guía). */
+  hintEs: string
+  hintEn: string
+  /** Frase motivacional de la “misión”. */
+  storyGoalEs: string
+  storyGoalEn: string
   targetPattern: string[]
   gridCols: number
   allowedBlocks: string[]

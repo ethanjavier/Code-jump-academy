@@ -1,10 +1,11 @@
 import type { GuidedCourse, GuidedLesson, Localized } from './guidedLessonTypes'
+import { sortGuidedLessonsForBeginnerSpine } from './guidedLessonCanonicalOrder'
 import { introStripeLesson } from './stripeIntroLessons'
 
 const L = (es: string, en: string): Localized => ({ es, en })
 
 /** Same guided lesson count per track (overview buttons aligned); includes interactive intro stripe. */
-export const GUIDED_LESSON_TARGET = 7
+export const GUIDED_LESSON_TARGET = 9
 
 /** Universal filler lessons when a track has fewer than {@link GUIDED_LESSON_TARGET} authored lessons. */
 const PAD_POOL: Omit<GuidedLesson, 'id'>[] = [
@@ -166,7 +167,8 @@ const PAD_POOL: Omit<GuidedLesson, 'id'>[] = [
 
 export function padGuidedCourse(course: GuidedCourse): GuidedCourse {
   const intro = introStripeLesson(course.languageId)
-  let lessons = [intro, ...course.lessons.filter((l) => l.id !== intro.id)]
+  const tail = sortGuidedLessonsForBeginnerSpine(course.lessons.filter((l) => l.id !== intro.id))
+  let lessons = [intro, ...tail]
   if (lessons.length > GUIDED_LESSON_TARGET) {
     lessons = lessons.slice(0, GUIDED_LESSON_TARGET)
   }

@@ -1,4 +1,4 @@
-import { Alert, Button, Modal, Progress, Select, Tag } from 'antd'
+import { Alert, Button, Modal, Progress, Result, Select, Tag } from 'antd'
 import { motion } from 'framer-motion'
 import {
   Blocks,
@@ -389,7 +389,7 @@ function PuzzleWorkspace({
       <main className="grid min-h-0 w-full flex-1 grid-cols-1 gap-4 overflow-hidden px-4 py-4 md:gap-5 md:px-5 md:py-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,0.72fr)_minmax(0,0.88fr)] lg:items-stretch lg:px-8 lg:auto-rows-[minmax(0,1fr)]">
         {/* Columna 1: brief + lienzo */}
         <section className="flex min-h-0 min-w-0 flex-col gap-4 lg:min-h-0">
-          <div className="shrink-0 rounded-2xl border border-indigo-500/25 bg-slate-900/70 p-4 shadow-xl shadow-black/30 ring-1 ring-white/10 backdrop-blur-sm md:p-5">
+          <div className="shrink-0 rounded-3xl border border-indigo-500/25 bg-slate-900/70 p-4 shadow-xl shadow-black/30 ring-1 ring-white/10 backdrop-blur-sm md:p-5">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
                 <BookOpenText
@@ -406,7 +406,7 @@ function PuzzleWorkspace({
             </p>
           </div>
 
-          <div className="flex min-h-[220px] flex-1 flex-col rounded-2xl border border-teal-500/20 bg-slate-900/60 p-4 shadow-xl shadow-black/25 ring-1 ring-teal-500/15 backdrop-blur-sm md:p-5 lg:min-h-0">
+          <div className="flex min-h-[220px] flex-1 flex-col rounded-3xl border border-teal-500/20 bg-slate-900/60 p-4 shadow-xl shadow-black/25 ring-1 ring-teal-500/15 backdrop-blur-sm md:p-5 lg:min-h-0">
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
               <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
                 <LayoutGrid
@@ -451,16 +451,28 @@ function PuzzleWorkspace({
                     return (
                       <motion.div
                         key={`${r}-${c}`}
-                        layout
-                        className={`relative flex size-14 items-center justify-center rounded-xl border-2 sm:size-16 ${
+                        className={`relative flex size-14 items-center justify-center rounded-2xl border-2 sm:size-16 ${
                           isCursor && isRunning
-                            ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-950'
+                            ? 'z-[1] ring-2 ring-amber-300 ring-offset-2 ring-offset-slate-950'
                             : ''
                         } ${bgClass}`}
-                        animate={{
-                          scale: isCursor && isRunning ? 1.05 : 1,
+                        animate={
+                          isCursor && isRunning
+                            ? {
+                                scale: [1.02, 1.09, 1.02],
+                                boxShadow: [
+                                  '0 0 0 0 rgba(251,191,36,0)',
+                                  '0 0 22px 6px rgba(251,191,36,0.5)',
+                                  '0 0 0 0 rgba(251,191,36,0)',
+                                ],
+                              }
+                            : { scale: 1, boxShadow: '0 0 0 0 transparent' }
+                        }
+                        transition={{
+                          repeat: isCursor && isRunning ? Infinity : 0,
+                          duration: 0.85,
+                          ease: 'easeInOut',
                         }}
-                        transition={{ type: 'spring', stiffness: 320, damping: 22 }}
                       >
                         <span className="sr-only">
                           Celda {idx + 1}, objetivo {target}
@@ -487,7 +499,7 @@ function PuzzleWorkspace({
         {/* Columna 2: código (franja más estrecha → más sitio para el lienzo) */}
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden max-lg:min-h-[220px] lg:h-full">
           <motion.div
-            className={`flex min-h-0 h-full max-h-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-slate-900/75 p-3 shadow-xl shadow-indigo-950/40 ring-1 ring-indigo-500/20 backdrop-blur-sm md:p-4 lg:p-4 ${
+            className={`flex min-h-0 h-full max-h-full min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border bg-slate-900/75 p-3 shadow-xl shadow-indigo-950/40 ring-1 ring-indigo-500/20 backdrop-blur-sm md:p-4 lg:p-4 ${
               isRunning ? 'border-emerald-400/60 ring-emerald-400/35' : 'border-indigo-500/25'
             }`}
             animate={
@@ -517,9 +529,9 @@ function PuzzleWorkspace({
                 {t('workspace.yourCode')}
               </h2>
               <div className="flex flex-wrap gap-2">
-                <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-block">
+                <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.95 }} className="inline-block">
                   <Button
-                    className="h-10 rounded-xl border border-amber-500/35 bg-amber-950/40 font-display font-semibold text-amber-100 shadow-none hover:!border-amber-400/55 hover:!bg-amber-900/55 hover:!text-white"
+                    className="h-10 rounded-3xl border border-amber-500/35 bg-amber-950/40 font-display font-semibold text-amber-100 shadow-none hover:!border-amber-400/55 hover:!bg-amber-900/55 hover:!text-white"
                     icon={
                       <Eraser className="size-4 text-amber-400" strokeWidth={iconStroke.medium} aria-hidden />
                     }
@@ -528,9 +540,9 @@ function PuzzleWorkspace({
                     {t('workspace.clear')}
                   </Button>
                 </motion.span>
-                <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-block">
+                <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.95 }} className="inline-block">
                   <Button
-                    className="h-10 rounded-xl border border-teal-500/35 bg-teal-950/35 font-display font-semibold text-teal-100 shadow-none hover:!border-teal-400/50 hover:!bg-teal-900/45 hover:!text-white"
+                    className="h-10 rounded-3xl border border-teal-500/35 bg-teal-950/35 font-display font-semibold text-teal-100 shadow-none hover:!border-teal-400/50 hover:!bg-teal-900/45 hover:!text-white"
                     icon={
                       <RotateCcw className="size-4 text-teal-400" strokeWidth={iconStroke.medium} aria-hidden />
                     }
@@ -541,12 +553,12 @@ function PuzzleWorkspace({
                 </motion.span>
                 <motion.span
                   whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   className="inline-block"
                 >
                   <Button
                     type="primary"
-                    className="relative h-11 overflow-hidden rounded-xl border-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-5 font-display text-base font-bold shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-400/25 hover:!from-emerald-500 hover:!to-teal-500"
+                    className="relative h-11 overflow-hidden rounded-3xl border-0 bg-gradient-to-r from-emerald-600 to-teal-600 px-5 font-display text-base font-bold shadow-lg shadow-emerald-950/40 ring-1 ring-emerald-400/25 hover:!from-emerald-500 hover:!to-teal-500"
                     icon={<Play className="size-4 fill-current" strokeWidth={iconStroke.medium} aria-hidden />}
                     loading={isRunning}
                     onClick={() => void handleRun()}
@@ -608,7 +620,7 @@ function PuzzleWorkspace({
 
         {/* Columna 3: paleta + contenedores */}
         <section className="flex min-h-[240px] min-w-0 flex-col lg:min-h-0">
-          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-violet-500/25 bg-slate-900/70 p-4 shadow-xl shadow-violet-950/35 ring-1 ring-violet-500/15 backdrop-blur-sm md:p-5">
+          <div className="flex min-h-0 flex-1 flex-col rounded-3xl border border-violet-500/25 bg-slate-900/70 p-4 shadow-xl shadow-violet-950/35 ring-1 ring-violet-500/15 backdrop-blur-sm md:p-5">
             <div className="mb-3 shrink-0 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display flex items-center gap-2 text-base font-semibold text-white">
                 <Blocks
@@ -687,9 +699,9 @@ function PuzzleWorkspace({
         onCancel={() => setResultModal((m) => ({ ...m, open: false }))}
         footer={
           <div className="flex flex-wrap items-center justify-center gap-3 border-t border-white/10 bg-slate-950/95 px-5 py-4 sm:justify-end md:px-6">
-            <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-flex max-w-full min-w-0">
+            <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.95 }} className="inline-flex max-w-full min-w-0">
               <Button
-                className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border border-slate-600 bg-slate-900 px-5 py-3 font-display font-bold text-slate-100 shadow-lg hover:!border-amber-500/50 hover:!bg-slate-800"
+                className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-3xl border border-slate-600 bg-slate-900 px-5 py-3 font-display font-bold text-slate-100 shadow-lg hover:!border-amber-500/50 hover:!bg-slate-800"
                 onClick={() => setResultModal((m) => ({ ...m, open: false }))}
               >
                 <span className="flex w-full min-w-0 items-start gap-3 text-left">
@@ -708,10 +720,10 @@ function PuzzleWorkspace({
               </Button>
             </motion.span>
             {resultModal.ok && campaignHasRemainingPuzzle ? (
-              <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="inline-flex max-w-full min-w-0">
+              <motion.span whileHover={{ y: -1 }} whileTap={{ scale: 0.95 }} className="inline-flex max-w-full min-w-0">
                 <Button
                   type="primary"
-                  className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-xl border-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3 font-display font-bold text-white shadow-lg ring-1 ring-white/10 hover:!from-violet-500 hover:!to-fuchsia-500"
+                  className="group inline-flex !h-auto min-h-0 max-w-full items-center whitespace-normal rounded-3xl border-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-3 font-display font-bold text-white shadow-lg ring-1 ring-white/10 hover:!from-violet-500 hover:!to-fuchsia-500"
                   onClick={() => {
                     setResultModal((m) => ({ ...m, open: false }))
                     onAdvanceCampaignPuzzle()
@@ -737,11 +749,12 @@ function PuzzleWorkspace({
         }
         centered
         closable={false}
+        rootClassName="[&_.ant-modal-content]:!rounded-3xl [&_.ant-modal-content]:!overflow-hidden [&_.ant-modal-content]:!p-0"
         styles={{
           body: {
             padding: 0,
             overflow: 'hidden',
-            borderRadius: 16,
+            borderRadius: 24,
             border: '1px solid rgb(71 85 105 / 0.55)',
             background:
               'linear-gradient(165deg, rgb(15 23 42 / 0.98) 0%, rgb(30 27 75 / 0.95) 45%, rgb(15 23 42 / 0.99) 100%)',
@@ -753,61 +766,57 @@ function PuzzleWorkspace({
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 8 }}
+          initial={{ opacity: 0, scale: 0.92, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-          className="relative overflow-hidden px-5 pb-2 pt-6 md:px-6"
+          className="relative overflow-hidden px-4 pb-1 pt-5 md:px-6 md:pt-6"
         >
-          <div className="relative flex flex-col gap-4">
-            <div className="flex items-start gap-4">
+          <Result
+            className="!bg-transparent !px-2 !pb-2 [&_.ant-result-icon]:!mb-3 [&_.ant-result-title]:!w-full [&_.ant-result-title]:!max-w-none [&_.ant-result-subtitle]:!mt-2 [&_.ant-result-subtitle]:!w-full [&_.ant-result-subtitle]:!max-w-none [&_.ant-result-extra]:!mt-4"
+            status={resultModal.ok ? 'success' : 'warning'}
+            icon={
               <div
-                className={`flex size-14 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 ring-black/5 ${
-                  resultModal.ok ? 'bg-emerald-500' : 'bg-amber-500'
+                className={`mx-auto flex size-16 items-center justify-center rounded-2xl shadow-lg ring-1 ring-black/20 ${
+                  resultModal.ok ? 'bg-gradient-to-br from-emerald-400 to-teal-600' : 'bg-gradient-to-br from-amber-400 to-orange-600'
                 }`}
               >
                 {resultModal.ok ? (
-                  <CheckCircle2
-                    className="size-8 text-white drop-shadow"
-                    strokeWidth={iconStroke.strong}
-                    aria-hidden
-                  />
+                  <CheckCircle2 className="size-9 text-white drop-shadow" strokeWidth={iconStroke.strong} aria-hidden />
                 ) : (
-                  <XCircle
-                    className="size-8 text-white drop-shadow"
-                    strokeWidth={iconStroke.strong}
-                    aria-hidden
-                  />
+                  <XCircle className="size-9 text-white drop-shadow" strokeWidth={iconStroke.strong} aria-hidden />
                 )}
               </div>
-              <div className="min-w-0 flex-1 pt-0.5">
-                <p className="font-display text-xl font-bold tracking-tight text-transparent [background-clip:text] bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-indigo-200">
-                  {resultModal.title}
-                </p>
-              </div>
-            </div>
-            {resultModal.ok && resultModal.stars > 0 ? (
-              <div className="flex items-center justify-center gap-3 py-2" aria-label="Estrellas conseguidas">
-                {[1, 2, 3].map((i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.06 * i, type: 'spring', stiffness: 400, damping: 18 }}
-                  >
-                    <Star
-                      className={`size-12 ${
-                        i <= resultModal.stars
-                          ? 'fill-amber-400 stroke-amber-300 text-amber-500'
-                          : 'fill-none stroke-slate-600 text-slate-600'
-                      }`}
-                      strokeWidth={i <= resultModal.stars ? 0 : 1.5}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            ) : null}
-            <div className="text-sm leading-relaxed text-slate-300">{resultModal.detail}</div>
-          </div>
+            }
+            title={
+              <span className="font-display text-xl font-bold tracking-tight text-transparent [background-clip:text] bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-indigo-200">
+                {resultModal.title}
+              </span>
+            }
+            subTitle={<div className="text-left text-sm leading-relaxed text-slate-300">{resultModal.detail}</div>}
+            extra={
+              resultModal.ok && resultModal.stars > 0 ? (
+                <div className="flex items-center justify-center gap-3" aria-label="Estrellas conseguidas">
+                  {[1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ scale: 0, rotate: -24 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.12 * i, type: 'spring', stiffness: 420, damping: 16 }}
+                    >
+                      <Star
+                        className={`size-12 ${
+                          i <= resultModal.stars
+                            ? 'fill-amber-400 stroke-amber-300 text-amber-500 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]'
+                            : 'fill-none stroke-slate-600 text-slate-600'
+                        }`}
+                        strokeWidth={i <= resultModal.stars ? 0 : 1.5}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : null
+            }
+          />
         </motion.div>
       </Modal>
     </div>

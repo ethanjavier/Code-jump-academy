@@ -16,10 +16,28 @@ export type GuidedConceptKey =
 
 export type OrderLinesExercise = {
   type: 'orderLines'
-  /** Code lines (short, one per row). */
+  /**
+   * Code lines (short, one per row). Add more rows as the lesson’s flow grows (e.g. declare → use → close).
+   */
   lines: Localized[]
   /** Permutation of indices 0..n-1 that is correct top-to-bottom. */
   correctOrder: number[]
+}
+
+/**
+ * One program built from small fragments (keywords, names, punctuation).
+ * User reorders rows top → bottom; concatenating fragments in that order must yield valid source.
+ */
+export type AssembleLineExercise = {
+  type: 'assembleLine'
+  /**
+   * Tokens top → bottom concatenate into one line. Add more entries as the lesson introduces names,
+   * operators, literals, or punctuation the learner must place in order.
+   */
+  tokens: Localized[]
+  /** Indices top → bottom when fragments read correctly as one program (concatenate in order). */
+  correctOrder: number[]
+  wrongHint: Localized
 }
 
 export type PickOneExercise = {
@@ -35,7 +53,10 @@ export type RunCodeExercise = {
   runtime: 'javascript' | 'python'
   /** Starter template shown in the editor (user edits and taps Run). */
   starter: Localized
-  /** Every listed substring must appear in stdout (locale-specific checks). */
+  /**
+   * Every substring must appear in the combined Run output + error text (locale-specific).
+   * Add more entries as the lesson checks extra outcomes (e.g. a literal, a label, a second line).
+   */
   expectOutputIncludes: { es: string[]; en: string[] }
   wrongHint: Localized
 }
@@ -60,17 +81,81 @@ export type StripeChallengeExercise = {
   type: 'stripeChallenge'
   /** Shown above the goal flag preview */
   flagTitle: Localized
+  /** Add more stripes as the lesson’s story has more steps (variables, branches, loops, …). */
   pieces: StripePiece[]
   /** Permutation of indices 0..n-1: correct order top → bottom */
   correctOrder: number[]
   wrongHint: Localized
 }
 
+/** Snippets-only coding: learner builds text using palette inserts; typing from keyboard is disabled in the runner. */
+export type PaletteCodePiece = {
+  id: string
+  insertText: Localized
+  hint?: Localized
+}
+
+/** One colored band in the live canvas / success modal (same order as lines in {@link PaletteCodeExercise.correctText}). */
+export type PaletteCodeResultStripe = {
+  swatch: StripeSwatch
+  caption: Localized
+}
+
+/**
+ * Large interactive focal on the beginner canvas — matches the lesson metaphor
+ * (greeting word, SQL funnel, HTML sandwich, etc.).
+ */
+export type PaletteCodeCanvasHero =
+  | {
+      mode: 'greeting'
+      headline: Localized
+      highlightWhenFirstLineMatches?: boolean
+    }
+  | {
+      mode: 'typeRibbon'
+      headline: Localized
+      highlightWhenFirstLineMatches?: boolean
+    }
+  | {
+      mode: 'sqlRiver'
+      highlightWhenFirstLineMatches?: boolean
+    }
+  | {
+      mode: 'htmlLayers'
+      headline: Localized
+      highlightWhenFirstLineMatches?: boolean
+    }
+  | {
+      mode: 'pipeline'
+      headline: Localized
+      highlightWhenFirstLineMatches?: boolean
+    }
+
+export type PaletteCodeExercise = {
+  type: 'paletteCode'
+  /**
+   * Insert-only snippets for the editor. Add more cards as the lesson needs (keywords, literals,
+   * new lines, extra lines of code).
+   */
+  palette: PaletteCodePiece[]
+  /** Exact expected source after normalizing newlines (matches concatenation of lines with \\n). */
+  correctText: Localized
+  wrongHint: Localized
+  /** Short goal line for the tools column */
+  goalSummary: Localized
+  /** Drives the beginner canvas preview and celebration modal — one stripe per program line. */
+  resultPreview?: PaletteCodeResultStripe[]
+  /** Optional giant canvas focal word — see {@link PaletteCodeCanvasHero}. */
+  canvasHero?: PaletteCodeCanvasHero
+}
+
 export type GuidedExercise =
   | OrderLinesExercise
+  | AssembleLineExercise
   | PickOneExercise
   | RunCodeExercise
   | StripeChallengeExercise
+  | PaletteCodeExercise
 
 /**
  * Mini “lienzo” para modo principiante: misma analogía visual que Bloques (drawBox, skip,

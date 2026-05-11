@@ -1,53 +1,12 @@
-import { ChevronRight, Flag } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 import type { ColorKey } from '../engine/blocks'
-import type {
-  GuidedCanvasGoalPreview,
-  GuidedCanvasPiece,
-  GuidedCanvasRow,
-} from '../courses/guidedLessonTypes'
+import type { GuidedCanvasPiece, GuidedCanvasRow } from '../courses/guidedLessonTypes'
 import { STRIPE_SWATCH_BG } from '../courses/stripeSwatch'
 import { COLOR_META } from './constants'
 import { iconStroke } from './icons'
 import { useI18n } from '../i18n/I18nContext'
 import { localized } from './languageQuizzes'
-
-function GoalPreview({ preview }: { preview: GuidedCanvasGoalPreview }) {
-  if (preview.type === 'stripes') {
-    return (
-      <div
-        className="flex h-10 w-full max-w-md overflow-hidden rounded-lg border border-white/15 shadow-inner ring-1 ring-black/30"
-        aria-hidden
-      >
-        {preview.colors.map((c, i) => (
-          <div
-            key={`stripe-${i}`}
-            className={`min-h-0 min-w-0 flex-1 ${COLOR_META[c].tailwindClass}`}
-          />
-        ))}
-      </div>
-    )
-  }
-  return (
-    <div className="flex max-w-md flex-wrap gap-1.5" aria-hidden>
-      {preview.items.map((cell, i) =>
-        cell === 'skip' ? (
-          <div
-            key={`cell-${i}`}
-            className="flex size-9 items-center justify-center rounded-lg border border-dashed border-slate-500 bg-slate-800/90 sm:size-10"
-          >
-            <span className="font-display text-[10px] font-semibold text-slate-500">—</span>
-          </div>
-        ) : (
-          <div
-            key={`cell-${i}`}
-            className={`size-9 rounded-lg border border-white/15 shadow-md ring-1 ring-black/30 sm:size-10 ${COLOR_META[cell].tailwindClass}`}
-          />
-        ),
-      )}
-    </div>
-  )
-}
 
 function DrawBoxChip({ color }: { color: ColorKey }) {
   return (
@@ -65,34 +24,12 @@ function DrawBoxChip({ color }: { color: ColorKey }) {
 }
 
 function CanvasPiece({ piece }: { piece: GuidedCanvasPiece }) {
-  const { locale, t } = useI18n()
+  const { locale } = useI18n()
 
   switch (piece.kind) {
+    /** Objetivo “Real canvas goal” retirado de la paleta / mini-lienzo — el panel de meta ya está en instrucciones. */
     case 'realGoal':
-      return (
-        <div className="w-full rounded-2xl border border-amber-500/35 bg-gradient-to-br from-amber-950/50 via-slate-900/80 to-slate-950/90 p-3 shadow-lg ring-1 ring-amber-500/20 md:p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="inline-flex size-8 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-950/60">
-              <Flag className="size-4 text-amber-300" strokeWidth={iconStroke.soft} aria-hidden />
-            </span>
-            <span className="font-display text-[10px] font-bold uppercase tracking-wider text-amber-200/95">
-              {t('guided.canvasRealGoal')}
-            </span>
-          </div>
-          <p className="font-display text-sm font-bold leading-snug text-white">{localized(piece.headline, locale)}</p>
-          {piece.detail ? (
-            <p className="mt-1.5 text-[12px] leading-relaxed text-slate-400">{localized(piece.detail, locale)}</p>
-          ) : null}
-          {piece.preview ? (
-            <div className="mt-3 border-t border-white/10 pt-3">
-              <p className="mb-2 font-display text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                {t('guided.canvasGoalPreview')}
-              </p>
-              <GoalPreview preview={piece.preview} />
-            </div>
-          ) : null}
-        </div>
-      )
+      return null
     case 'drawBox':
       return <DrawBoxChip color={piece.color} />
     case 'skip':
@@ -204,14 +141,9 @@ function CanvasPiece({ piece }: { piece: GuidedCanvasPiece }) {
               className={`mt-0.5 h-9 w-1.5 shrink-0 rounded-full shadow-inner ${STRIPE_SWATCH_BG[piece.swatch]}`}
               aria-hidden
             />
-            <div className="min-w-0 flex-1">
-              <span className="font-display text-sm font-semibold text-slate-100">{localized(piece.label, locale)}</span>
-              {piece.snippet ? (
-                <pre className="mt-1.5 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-indigo-200/95">
-                  {localized(piece.snippet, locale)}
-                </pre>
-              ) : null}
-            </div>
+            <pre className="min-w-0 flex-1 whitespace-pre-wrap font-mono text-[12px] leading-relaxed text-indigo-200/95">
+              {localized(piece.snippet ?? piece.label, locale)}
+            </pre>
           </div>
         </div>
       )
@@ -222,37 +154,29 @@ function CanvasPiece({ piece }: { piece: GuidedCanvasPiece }) {
 
 type Props = {
   rows: GuidedCanvasRow[]
-  /** Teal = panel vista previa; violet = panel herramientas (misma pieza, otro acento). */
-  tone?: 'teal' | 'violet'
 }
 
 /** Bloques estilo CodeJump (drawBox, variables, Repetir…) — referencia junto al código o en herramientas. */
-export function GuidedCanvasLienzo({ rows, tone = 'teal' }: Props) {
-  const { t } = useI18n()
-  if (!rows.length) return null
+function rowWithoutRealGoal(row: GuidedCanvasRow): GuidedCanvasRow {
+  return row.filter((p) => p.kind !== 'realGoal')
+}
 
-  const titleTone =
-    tone === 'violet'
-      ? 'text-violet-200/95'
-      : 'text-teal-200/95'
+export function GuidedCanvasLienzo({ rows }: Props) {
+  const visibleRows = rows.map(rowWithoutRealGoal).filter((r) => r.length > 0)
+  if (!visibleRows.length) return null
 
   return (
     <div className="space-y-3">
-      <p className={`font-display text-[11px] font-bold uppercase tracking-wider ${titleTone}`}>
-        {t('guided.canvasBlocksAnalog')}
-      </p>
-      <div className="space-y-3">
-        {rows.map((row, ri) => (
-          <div
-            key={`canvas-row-${ri}`}
-            className={`flex flex-wrap items-center gap-2 ${row.some((p) => p.kind === 'caption' || p.kind === 'ifSplit' || p.kind === 'realGoal' || p.kind === 'stripePaletteChip') ? 'w-full' : ''}`}
-          >
-            {row.map((piece, pi) => (
-              <CanvasPiece key={`piece-${ri}-${pi}`} piece={piece} />
-            ))}
-          </div>
-        ))}
-      </div>
+      {visibleRows.map((row, ri) => (
+        <div
+          key={`canvas-row-${ri}`}
+          className={`flex flex-wrap items-center gap-2 ${row.some((p) => p.kind === 'caption' || p.kind === 'ifSplit' || p.kind === 'stripePaletteChip') ? 'w-full' : ''}`}
+        >
+          {row.map((piece, pi) => (
+            <CanvasPiece key={`piece-${ri}-${pi}`} piece={piece} />
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
