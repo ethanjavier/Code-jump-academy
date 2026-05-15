@@ -12,7 +12,7 @@ import type {
 const L = (es: string, en: string): Localized => ({ es, en })
 
 /** Builds a palette-code intro; extend `lines` when the lesson should offer more snippets (names, keywords, extra lines). */
-function paletteIntroLesson(opts: {
+export function paletteIntroLesson(opts: {
   id: string
   title: Localized
   instruction: Localized

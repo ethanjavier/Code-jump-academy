@@ -5,6 +5,11 @@ import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { getGuidedCourse, hasGuidedCourse } from '../courses/courseRegistry'
+import {
+  GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL,
+  GUIDED_BEGINNER_LESSONS_PER_MODULE,
+  GUIDED_LESSON_TARGET,
+} from '../courses/guidedLessonPadding'
 import { useI18n } from '../i18n/I18nContext'
 import { GuidedLessonRunner } from './guidedLesson/GuidedLessonRunner'
 import { iconStroke } from './icons'
@@ -185,7 +190,7 @@ function tryInitialGuidedSession(preferredLang?: LearningLanguageId): GuidedSess
     preferredLang && langs.includes(preferredLang) ? preferredLang : langs[0]!
   if (getTrackPracticeMode(lang) !== 'beginner') return null
   if (!hasGuidedCourse(lang)) return null
-  const course = getGuidedCourse(lang)
+  const course = getGuidedCourse(lang, 'beginner')
   if (!course?.lessons.length) return null
   return { lang, lessonIndex: 0 }
 }
@@ -225,7 +230,7 @@ function practiceBootstrapFromSearch(search: string): {
   }
 
   if (resolvedLang !== undefined && practice.lesson !== undefined) {
-    const course = getGuidedCourse(resolvedLang)
+    const course = getGuidedCourse(resolvedLang, modes[resolvedLang] ?? 'beginner')
     const max = Math.max(0, (course?.lessons.length ?? 1) - 1)
     return {
       trackModes: modes,
@@ -271,6 +276,12 @@ export function LanguagePracticeShell({
         }
   const [quizSession, setQuizSession] = useState<QuizSession | null>(() => boot.quizSession)
   const [guidedSession, setGuidedSession] = useState<GuidedSession | null>(() => boot.guidedSession)
+  /** Beginner extended (45 lessons): which guided module (0-based) is expanded per language on the overview. */
+  const [beginnerGuidedModuleByLang, setBeginnerGuidedModuleByLang] = useState<
+    Partial<Record<LearningLanguageId, number | null>>
+  >({})
+  /** JavaScript Advanced: lesson buttons stay hidden until the learner expands the list. */
+  const [javascriptAdvancedGuidedOpen, setJavascriptAdvancedGuidedOpen] = useState(false)
   const [trackModes, setTrackModes] = useState<Partial<Record<LearningLanguageId, PracticeTrackMode>>>(
     () => boot.trackModes,
   )
@@ -285,6 +296,8 @@ export function LanguagePracticeShell({
   const practiceGridClass = showPracticeCanvas ? PRACTICE_GRID_BEGINNER : PRACTICE_GRID_ADVANCED
 
   const setTrackMode = (lang: LearningLanguageId, mode: PracticeTrackMode) => {
+    setBeginnerGuidedModuleByLang((prev) => ({ ...prev, [lang]: null }))
+    if (lang === 'javascript') setJavascriptAdvancedGuidedOpen(false)
     saveTrackPracticeMode(lang, mode)
     setTrackModes((prev) => ({ ...prev, [lang]: mode }))
   }
@@ -346,7 +359,7 @@ export function LanguagePracticeShell({
   )
 
   if (guidedSession) {
-    const course = getGuidedCourse(guidedSession.lang)
+    const course = getGuidedCourse(guidedSession.lang, modeFor(guidedSession.lang))
     const lessonsLen = course?.lessons.length ?? 0
     const gMode = modeFor(guidedSession.lang)
     return (
@@ -404,7 +417,7 @@ export function LanguagePracticeShell({
             onGoToLesson={(index) =>
               setGuidedSession((s) => {
                 if (!s) return s
-                const len = getGuidedCourse(s.lang)?.lessons.length ?? 0
+                const len = getGuidedCourse(s.lang, modeFor(s.lang))?.lessons.length ?? 0
                 if (index < 0 || index >= len) return s
                 return { ...s, lessonIndex: index }
               })
@@ -574,7 +587,7 @@ export function LanguagePracticeShell({
                   <div className="flex min-h-0 flex-1 flex-wrap content-start gap-3 overflow-y-auto">
                     {practiceLangs.map((lang) => {
                       const Icon = TRACK_ICONS[lang]
-                      const gc = getGuidedCourse(lang)
+                      const gc = getGuidedCourse(lang, modeFor(lang))
                       const gCount = gc?.lessons.length ?? 0
                       return (
                         <div
@@ -613,8 +626,16 @@ export function LanguagePracticeShell({
                 <div className="code-workspace-scroll min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
                   {practiceLangs.map((lang) => {
                     const Icon = TRACK_ICONS[lang]
-                    const guidedCourse = getGuidedCourse(lang)
+                    const guidedCourse = getGuidedCourse(lang, modeFor(lang))
                     const guidedCount = guidedCourse?.lessons.length ?? 0
+                    const extendedBeginnerGuided =
+                      modeFor(lang) === 'beginner' &&
+                      guidedCount === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
+                    const javascriptAdvancedNineStep =
+                      lang === 'javascript' &&
+                      modeFor(lang) === 'advanced' &&
+                      guidedCount === GUIDED_LESSON_TARGET
+                    const openGuidedModule = beginnerGuidedModuleByLang[lang] ?? null
                     return (
                       <div
                         key={lang}
@@ -653,21 +674,117 @@ export function LanguagePracticeShell({
                           <p className="font-display text-xs font-bold uppercase tracking-wide text-amber-200/95">
                             {t('guided.courseSection')}
                           </p>
-                          <p className="mt-2 text-sm text-slate-400">{t('guided.courseBlurb')}</p>
+                          <p className="mt-2 text-sm text-slate-400">
+                            {extendedBeginnerGuided
+                              ? t('guided.extendedModuleBlurb')
+                              : javascriptAdvancedNineStep
+                                ? t('guided.advancedJsModuleBlurb')
+                                : t('guided.courseBlurb')}
+                          </p>
                           {hasGuidedCourse(lang) && guidedCount > 0 ? (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {Array.from({ length: guidedCount }, (_, i) => (
-                                <Button
-                                  key={`${lang}-guided-${i}`}
-                                  type="primary"
-                                  className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
-                                  onClick={() => setGuidedSession({ lang, lessonIndex: i })}
-                                >
-                                  {t('guided.lessonButton', { num: String(i + 1) })}
-                                </Button>
-                              ))}
-                            </div>
-                          ) : (
+                            extendedBeginnerGuided ? (
+                              <div className="mt-4 space-y-4">
+                                {openGuidedModule === null ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {moduleIndices.map((m) => (
+                                      <Button
+                                        key={`${lang}-guided-mod-${m}`}
+                                        type="primary"
+                                        className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
+                                        onClick={() =>
+                                          setBeginnerGuidedModuleByLang((prev) => ({ ...prev, [lang]: m }))
+                                        }
+                                      >
+                                        {t('practice.moduleButton', { num: String(m + 1) })}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    <Button
+                                      type="link"
+                                      className="h-auto p-0 font-display text-amber-200/90 hover:!text-white"
+                                      onClick={() =>
+                                        setBeginnerGuidedModuleByLang((prev) => ({ ...prev, [lang]: null }))
+                                      }
+                                    >
+                                      {t('practice.backToModules')}
+                                    </Button>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-100/80">
+                                      {t('guided.extendedLessonHeading')}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {Array.from({ length: GUIDED_BEGINNER_LESSONS_PER_MODULE }, (_, i) => {
+                                        const idx =
+                                          openGuidedModule * GUIDED_BEGINNER_LESSONS_PER_MODULE + i
+                                        return (
+                                          <Button
+                                            key={`${lang}-guided-${idx}`}
+                                            type="primary"
+                                            className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
+                                            onClick={() => setGuidedSession({ lang, lessonIndex: idx })}
+                                          >
+                                            {t('guided.lessonButton', { num: String(idx + 1) })}
+                                          </Button>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : javascriptAdvancedNineStep ? (
+                              <div className="mt-4 space-y-3">
+                                {!javascriptAdvancedGuidedOpen ? (
+                                  <Button
+                                    type="primary"
+                                    className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
+                                    onClick={() => setJavascriptAdvancedGuidedOpen(true)}
+                                  >
+                                    {t('guided.advancedJsShowNine')}
+                                  </Button>
+                                ) : (
+                                  <div className="space-y-3">
+                                    <Button
+                                      type="link"
+                                      className="h-auto p-0 font-display text-amber-200/90 hover:!text-white"
+                                      onClick={() => setJavascriptAdvancedGuidedOpen(false)}
+                                    >
+                                      {t('guided.advancedJsHideNine')}
+                                    </Button>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-100/80">
+                                      {t('guided.advancedJsLessonHeading')}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {Array.from({ length: guidedCount }, (_, i) => (
+                                        <Button
+                                          key={`${lang}-guided-${i}`}
+                                          type="primary"
+                                          className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
+                                          onClick={() => setGuidedSession({ lang, lessonIndex: i })}
+                                        >
+                                          {t('guided.lessonButton', { num: String(i + 1) })}
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {Array.from({ length: guidedCount }, (_, i) => (
+                                  <Button
+                                    key={`${lang}-guided-${i}`}
+                                    type="primary"
+                                    className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
+                                    onClick={() => setGuidedSession({ lang, lessonIndex: i })}
+                                  >
+                                    {t('guided.lessonButton', { num: String(i + 1) })}
+                                  </Button>
+                                ))}
+                              </div>
+                            )
+                          )
+                          : (
                             <p className="mt-3 text-sm text-slate-500">{t('guided.moreCoursesSoon')}</p>
                           )}
                         </div>

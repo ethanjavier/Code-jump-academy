@@ -144,6 +144,17 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.courseSection': 'Guided lessons',
     'guided.courseBlurb':
       'Instructions plus a practice step (reorder lines, quiz, or **run code** in the mini lab). When a **new idea** appears, we explain it and relate it to CodeJump blocks when it helps.',
+    'guided.jsBeginnerModuleBlurb':
+      'Choose a module first; each one opens **nine guided lessons** (JavaScript beginner track only).',
+    'guided.jsBeginnerLessonHeading': 'Nine lessons in this module',
+    'guided.extendedModuleBlurb':
+      'Choose a module first; each opens **nine guided lessons** in this track (Beginner layout matches the JavaScript experience).',
+    'guided.extendedLessonHeading': 'Nine lessons in this module',
+    'guided.advancedJsModuleBlurb':
+      'In **Advanced** JavaScript, tap the button below to open the full list of **nine** guided lessons.',
+    'guided.advancedJsShowNine': 'Show all 9 lessons',
+    'guided.advancedJsHideNine': 'Hide lesson list',
+    'guided.advancedJsLessonHeading': 'Nine guided lessons',
     'guided.lessonButton': 'Lesson {{num}}',
     'guided.lessonMeta': 'Lesson {{current}} / {{total}}',
     'guided.newIdea': 'New idea — read this before coding',
@@ -154,6 +165,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.assembleLineWorkspaceHint':
       'Each row is a piece of the line (or a new line). Use the arrows; the green preview updates as you go.',
     'guided.assembledLinePreview': 'Preview',
+    'guided.assembledLinePreviewFragments':
+      'Bars separate fragments in reading order; together they form one program.',
     'guided.moveUp': 'Move line up',
     'guided.moveDown': 'Move line down',
     'guided.tryReorder': 'Not quite — reorder so the program runs from top to bottom.',
@@ -514,6 +527,17 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.courseSection': 'Lecciones guiadas',
     'guided.courseBlurb':
       'Instrucciones + paso práctico (ordenar líneas, test rápido o **ejecutar código** en el mini laboratorio). Cuando hay una **idea nueva**, la explicamos y la relacionamos con los bloques de CodeJump cuando encaja.',
+    'guided.jsBeginnerModuleBlurb':
+      'Elige primero un módulo; dentro tendrás **nueve lecciones guiadas** (solo JavaScript en modo Principiante).',
+    'guided.jsBeginnerLessonHeading': 'Nueve lecciones en este módulo',
+    'guided.extendedModuleBlurb':
+      'Elige primero un módulo; dentro tendrás **nueve lecciones guiadas** en esta ruta (el modo Principiante replica la experiencia de JavaScript).',
+    'guided.extendedLessonHeading': 'Nueve lecciones en este módulo',
+    'guided.advancedJsModuleBlurb':
+      'En **JavaScript avanzado**, pulsa el botón de abajo para ver las **nueve** lecciones guiadas.',
+    'guided.advancedJsShowNine': 'Ver las 9 lecciones',
+    'guided.advancedJsHideNine': 'Ocultar lista de lecciones',
+    'guided.advancedJsLessonHeading': 'Nueve lecciones guiadas',
     'guided.lessonButton': 'Lección {{num}}',
     'guided.lessonMeta': 'Lección {{current}} / {{total}}',
     'guided.newIdea': 'Idea nueva — léelo antes de programar',
@@ -525,6 +549,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.assembleLineWorkspaceHint':
       'Cada fila es un trozo de código (o un salto de línea). Usa las flechas; la vista previa verde se actualiza.',
     'guided.assembledLinePreview': 'Vista previa',
+    'guided.assembledLinePreviewFragments':
+      'Las barras separan cada fragmento en el orden actual; juntos forman un solo programa.',
     'guided.moveUp': 'Subir línea',
     'guided.moveDown': 'Bajar línea',
     'guided.tryReorder': 'Casi — reordena para que el programa corra de arriba abajo.',

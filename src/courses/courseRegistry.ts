@@ -1,7 +1,12 @@
+import type { PracticeTrackMode } from '../app/learningPreferences'
 import type { LearningLanguageId } from '../app/learningTracks'
 
 import type { GuidedCourse } from './guidedLessonTypes'
-import { padGuidedCourse } from './guidedLessonPadding'
+import {
+  GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL,
+  GUIDED_LESSON_TARGET,
+  padGuidedCourse,
+} from './guidedLessonPadding'
 import {
   C_LANG_GUIDED_COURSE,
   CPP_GUIDED_COURSE,
@@ -52,9 +57,15 @@ const BY_LANG: Partial<Record<LearningLanguageId, GuidedCourse>> = {
   haskell: HASKELL_GUIDED_COURSE,
 }
 
-export function getGuidedCourse(lang: LearningLanguageId): GuidedCourse | undefined {
+export function getGuidedCourse(
+  lang: LearningLanguageId,
+  practiceMode?: PracticeTrackMode,
+): GuidedCourse | undefined {
   const raw = BY_LANG[lang]
-  return raw ? padGuidedCourse(raw) : undefined
+  if (!raw) return undefined
+  const lessonTarget =
+    practiceMode === 'advanced' ? GUIDED_LESSON_TARGET : GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
+  return padGuidedCourse(raw, { lessonTarget })
 }
 
 export function hasGuidedCourse(lang: LearningLanguageId): boolean {

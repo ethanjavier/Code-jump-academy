@@ -550,7 +550,7 @@ export function GuidedLessonRunner({
   practiceMode = 'beginner',
 }: Props) {
   const { t, locale } = useI18n()
-  const course = getGuidedCourse(lang)
+  const course = getGuidedCourse(lang, practiceMode)
   const lesson = course?.lessons[lessonIndex]
   const total = course?.lessons.length ?? 0
   const chapters = useMemo(() => guidedLessonChapters(total), [total])
@@ -881,10 +881,10 @@ export function GuidedLessonRunner({
     }
   }, [lesson, locale, runOutput, runError, completeLesson])
 
-  const assembledLinePreview = useMemo(() => {
-    if (!lesson || lesson.exercise.type !== 'assembleLine') return ''
+  const assemblePreviewPieces = useMemo(() => {
+    if (!lesson || lesson.exercise.type !== 'assembleLine') return [] as string[]
     const ex = lesson.exercise
-    return orderLines.map((ti) => localized(ex.tokens[ti]!, locale)).join('')
+    return orderLines.map((ti) => localized(ex.tokens[ti]!, locale))
   }, [lesson, orderLines, locale])
 
   const moveLine = useCallback(
@@ -1281,10 +1281,28 @@ export function GuidedLessonRunner({
                       <p className="font-display text-[10px] font-bold uppercase tracking-wide text-sky-400/90">
                         {t('guided.assembledLinePreview')}
                       </p>
-                      <div className="mt-1 max-h-[min(28vh,12rem)] overflow-auto whitespace-pre-wrap break-all font-[family-name:var(--font-code)] text-[12px] leading-relaxed">
-                        {assembledLinePreview
-                          ? highlightGuidedCodeLine(assembledLinePreview, 'asm-prev', lang)
-                          : '…'}
+                      <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                        {t('guided.assembledLinePreviewFragments')}
+                      </p>
+                      <div className="mt-1 max-h-[min(28vh,12rem)] overflow-auto font-[family-name:var(--font-code)] text-[12px] leading-relaxed">
+                        {assemblePreviewPieces.length > 0 ? (
+                          <div className="flex flex-wrap items-baseline whitespace-pre-wrap">
+                            {assemblePreviewPieces.map((piece, i) => (
+                              <span
+                                key={`asm-prev-${lesson.id}-${i}-tok${orderLines[i]}`}
+                                className={
+                                  i > 0
+                                    ? 'border-l border-sky-400/50 pl-2 text-sky-50/95'
+                                    : 'text-sky-50/95'
+                                }
+                              >
+                                {highlightGuidedCodeLine(piece, `asm-prev-${i}`, lang)}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          '…'
+                        )}
                       </div>
                     </div>
                     <ul className="divide-y divide-white/[0.07] font-[family-name:var(--font-code)] text-[13px] leading-snug">

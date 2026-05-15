@@ -845,11 +845,11 @@ function parseLearnGuidedEmbed(search: string): LearnGuidedEmbed | null {
   if (practice.pmode) {
     saveTrackPracticeMode(practice.lang, practice.pmode)
   }
-  const course = getGuidedCourse(practice.lang)
+  const practiceMode: PracticeTrackMode = practice.pmode ?? getTrackPracticeMode(practice.lang)
+  const course = getGuidedCourse(practice.lang, practiceMode)
   if (!course?.lessons.length) return null
   const max = course.lessons.length - 1
   const lessonIndex = Math.min(max, Math.max(0, practice.lesson ?? 0))
-  const practiceMode: PracticeTrackMode = practice.pmode ?? getTrackPracticeMode(practice.lang)
   return { lang: practice.lang, lessonIndex, practiceMode }
 }
 
@@ -973,7 +973,8 @@ function LearnShell({
   const lessonKey = `${chapterIndex}:${puzzleIndex}`
 
   const guidedCourseLen = useMemo(
-    () => (guidedEmbed ? getGuidedCourse(guidedEmbed.lang)?.lessons.length ?? 0 : 0),
+    () =>
+      guidedEmbed ? getGuidedCourse(guidedEmbed.lang, guidedEmbed.practiceMode)?.lessons.length ?? 0 : 0,
     [guidedEmbed],
   )
 

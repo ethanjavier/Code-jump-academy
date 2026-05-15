@@ -1,4 +1,6 @@
+import { PRACTICE_MODULE_COUNT } from '../app/languageQuizzes'
 import type { GuidedCourse, GuidedLesson, Localized } from './guidedLessonTypes'
+import { buildBeginnerExtendedPaletteLessons } from './beginnerExtendedPaletteByLanguage'
 import { sortGuidedLessonsForBeginnerSpine } from './guidedLessonCanonicalOrder'
 import { introStripeLesson } from './stripeIntroLessons'
 
@@ -6,6 +8,24 @@ const L = (es: string, en: string): Localized => ({ es, en })
 
 /** Same guided lesson count per track (overview buttons aligned); includes interactive intro stripe. */
 export const GUIDED_LESSON_TARGET = 9
+
+/** Beginner extended track: five guided “chapters” (same count as quiz modules), nine lessons each. */
+export const GUIDED_BEGINNER_LESSONS_PER_MODULE = 9
+export const GUIDED_BEGINNER_GUIDED_MODULE_COUNT = PRACTICE_MODULE_COUNT
+export const GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL =
+  GUIDED_BEGINNER_LESSONS_PER_MODULE * GUIDED_BEGINNER_GUIDED_MODULE_COUNT
+
+/** @deprecated Use GUIDED_BEGINNER_* exports */
+export const JAVASCRIPT_BEGINNER_LESSONS_PER_MODULE = GUIDED_BEGINNER_LESSONS_PER_MODULE
+/** @deprecated */
+export const JAVASCRIPT_BEGINNER_GUIDED_MODULE_COUNT = GUIDED_BEGINNER_GUIDED_MODULE_COUNT
+/** @deprecated */
+export const JAVASCRIPT_BEGINNER_GUIDED_LESSON_TOTAL = GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
+
+export type PadGuidedCourseOptions = {
+  /** When set, overrides {@link GUIDED_LESSON_TARGET} (trim or pad to this length). */
+  lessonTarget?: number
+}
 
 /** Universal filler lessons when a track has fewer than {@link GUIDED_LESSON_TARGET} authored lessons. */
 const PAD_POOL: Omit<GuidedLesson, 'id'>[] = [
@@ -165,15 +185,16 @@ const PAD_POOL: Omit<GuidedLesson, 'id'>[] = [
   },
 ]
 
-export function padGuidedCourse(course: GuidedCourse): GuidedCourse {
+export function padGuidedCourse(course: GuidedCourse, opts?: PadGuidedCourseOptions): GuidedCourse {
+  const target = opts?.lessonTarget ?? GUIDED_LESSON_TARGET
   const intro = introStripeLesson(course.languageId)
   const tail = sortGuidedLessonsForBeginnerSpine(course.lessons.filter((l) => l.id !== intro.id))
   let lessons = [intro, ...tail]
-  if (lessons.length > GUIDED_LESSON_TARGET) {
-    lessons = lessons.slice(0, GUIDED_LESSON_TARGET)
+  if (lessons.length > target) {
+    lessons = lessons.slice(0, target)
   }
   let padIndex = 0
-  while (lessons.length < GUIDED_LESSON_TARGET) {
+  while (lessons.length < target) {
     const template = PAD_POOL[padIndex % PAD_POOL.length]!
     const n = lessons.length + 1
     lessons.push({
@@ -181,6 +202,12 @@ export function padGuidedCourse(course: GuidedCourse): GuidedCourse {
       id: `${course.languageId}-guided-fill-${n}`,
     })
     padIndex += 1
+  }
+  if (
+    target === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL &&
+    lessons.length === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
+  ) {
+    lessons = [lessons[0]!, ...buildBeginnerExtendedPaletteLessons(course.languageId)]
   }
   return { ...course, lessons }
 }
