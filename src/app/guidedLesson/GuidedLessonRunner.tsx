@@ -368,26 +368,10 @@ function GuidedLessonGoalPanel({
         </div>
       ) : exercise.type === 'paletteCode' ? (
         <div className="mt-2 space-y-3">
-          <p className="text-sm leading-relaxed text-slate-300">{t('guided.paletteSnippetsExplainer')}</p>
-          <p className="text-sm font-semibold text-slate-200">{localized(exercise.goalSummary, locale)}</p>
-          <ul className="space-y-2">
-            {exercise.palette.map((p) => (
-              <li key={p.id} className="rounded-lg border border-white/10 bg-slate-950/50 p-2.5">
-                <pre className="whitespace-pre-wrap font-mono text-[12px] leading-snug text-emerald-100/95">
-                  {localized(p.insertText, locale) === '\n'
-                    ? p.hint
-                      ? localized(p.hint, locale)
-                      : '↵'
-                    : localized(p.insertText, locale)}
-                </pre>
-                {p.hint && localized(p.insertText, locale) !== '\n' ? (
-                  <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-slate-400">
-                    {localized(p.hint, locale)}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <p className="text-sm leading-relaxed text-slate-300">{t('guided.paletteBlockGoalExplainer')}</p>
+          <p className="text-sm font-semibold leading-relaxed text-slate-200">
+            {localized(exercise.goalSummary, locale)}
+          </p>
         </div>
       ) : exercise.type === 'stripeChallenge' ? (
         <div className="mt-2 space-y-3">
@@ -920,15 +904,24 @@ export function GuidedLessonRunner({
     [paletteDraftNormalized],
   )
 
+  const needsVariableBeforeOutput =
+    lesson?.exercise.type === 'paletteCode' &&
+    lesson.exercise.requiredConcepts?.includes('repeat_loop')
+
   const isPaletteEntryDisabled = useCallback(
     (entry: LessonPaletteEntry) => {
       if (won) return true
-      if (paletteHasVariable) return false
       const raw = localized(entry.insertText, locale)
       if (raw === '\n') return false
-      return entry.role === 'console' || entry.role === 'if_branch' || entry.role === 'repeat_loop'
+      if (!needsVariableBeforeOutput || paletteHasVariable) return false
+      if (entry.role === 'variable') return false
+      return (
+        entry.role === 'console' ||
+        entry.role === 'if_branch' ||
+        entry.role === 'repeat_loop'
+      )
     },
-    [won, paletteHasVariable, locale],
+    [won, paletteHasVariable, needsVariableBeforeOutput, locale],
   )
 
   const handleRunCode = useCallback(async () => {

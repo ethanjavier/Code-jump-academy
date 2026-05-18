@@ -1,7 +1,7 @@
 import type { GuidedConceptKey } from './guidedLessonTypes'
 
 const CONCEPT_PATTERNS: Record<GuidedConceptKey, RegExp> = {
-  variable: /\bconst\s+\w+\s*=/,
+  variable: /\b(?:const|let|var)\s+\w+\s*=|(?:^|\n)\s*[a-zA-Z_]\w*\s*=\s*[^=]/m,
   console: /console\.log\s*\(/,
   if_branch: /\bif\s*\(/,
   repeat_loop: /\bfor\s*\(/,

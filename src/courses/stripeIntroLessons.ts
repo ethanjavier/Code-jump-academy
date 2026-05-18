@@ -10,10 +10,9 @@ import type {
   PaletteCodePieceRole,
   PaletteCodeResultStripe,
 } from './guidedLessonTypes'
-import {
-  buildJsBeginnerBlockBridgeCanvas,
-  JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS,
-} from './jsBeginnerBlockBridge'
+import { buildBeginnerBlockBridgeCanvas } from './beginnerBlockBridgeByLanguage'
+import { blockAnchoredPaletteGoal, requiredConceptsForLanguage } from './beginnerPaletteBlockGoals'
+import { JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS } from './jsBeginnerBlockBridge'
 
 const L = (es: string, en: string): Localized => ({ es, en })
 
@@ -83,16 +82,13 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-js',
         title: L('Bandera del flujo (JavaScript)', 'Flow flag (JavaScript)'),
         instruction: L(
-          'Arma el mini programa **solo con la paleta**: cada tarjeta inserta código en el cursor. No escribas letras con el teclado (solo borrar o mover el cursor). Empieza con **Crear variable** (**const saludo**), luego **salida**, **condición** y **Repetir** (`for`) — cuatro líneas con **Nueva línea** entre ellas.\n\n**Obligatorio:** tu programa debe incluir al menos un `const` y un `for`. Mira el lienzo de bloques arriba: **Crear variable** guarda el valor; **Repetir** lo usa varias veces.\n\nEn lecciones siguientes irás **sumando más variables** enlazadas. Al acertar, el **lienzo** celebra y el **modal** muestra el flujo con colores.',
-          'Build the tiny program **from the palette only**: each card inserts code at the cursor (only delete or move the caret). Start with **Create variable** (**const saludo**), then **output**, **condition**, and **Repeat** (`for`) — four lines with **New line** between them.\n\n**Required:** your program must include at least one `const` and one `for`. See the block canvas above: **Create variable** stores the value; **Repeat** uses it several times.\n\nLater lessons will **add more linked variables**. When correct, the **canvas** celebrates and the **modal** shows the color flow.',
+          'Arma el mini programa **solo con la paleta**: cada tarjeta inserta código en el cursor. No escribas letras con el teclado (solo borrar o mover el cursor). Sigue el flujo del **lienzo de bloques**: **Crear variable** → **salida** → **condición** → **Repetir**. Usa **Nueva línea** entre líneas.\n\n**Obligatorio:** tu programa debe incluir al menos un **Crear variable** (`const`) y un **Repetir** (`for`). El panel **Objetivo** resume el mismo flujo (sin copiar código de memoria).\n\nEn lecciones siguientes irás **sumando más variables** enlazadas. Al acertar, el **lienzo** celebra y el **modal** muestra el flujo con colores.',
+          'Build the tiny program **from the palette only**: each card inserts code at the cursor (only delete or move the caret). Follow the **block canvas** flow: **Create variable** → **output** → **condition** → **Repeat**. Use **New line** between lines.\n\n**Required:** your program must include at least one **Create variable** (`const`) and one **Repeat** (`for`). The **Goal** panel shows the same flow (no need to memorize code).\n\nLater lessons will **add more linked variables**. When correct, the **canvas** celebrates and the **modal** shows the color flow.',
         ),
         introducesConcept: 'variable',
         requiredConcepts: [...JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS],
-        canvasLienzo: buildJsBeginnerBlockBridgeCanvas(3),
-        goalSummary: L(
-          'Objetivo: cuatro líneas — const saludo, console(saludo), if, for',
-          'Goal: four lines — const saludo, console(saludo), if, for',
-        ),
+        canvasLienzo: buildBeginnerBlockBridgeCanvas('javascript', 3),
+        goalSummary: blockAnchoredPaletteGoal('javascript'),
         previewStripes: [
           { swatch: 'violet', caption: L('Variable const', 'const variable') },
           { swatch: 'emerald', caption: L('Salida console', 'Console out') },
@@ -153,14 +149,13 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-ts',
         title: L('Bandera del flujo (TypeScript)', 'Flow flag (TypeScript)'),
         instruction: L(
-          'Construye las tres líneas **solo desde la paleta**: tipo → if → for. Entre líneas usa la tarjeta **Nueva línea**. Al acertar, el **lienzo** muestra tu imagen de celebración y el **modal** el flujo con franjas.',
-          'Build the three lines **from the palette only**: type → if → for. Between lines use the **New line** card. When correct, the **canvas** shows your celebration art and the **modal** the striped flow.',
+          'Construye el programa **solo desde la paleta**. Sigue el **lienzo de bloques** y el panel **Objetivo**: **Crear variable** (con tipo) → **condición** → **Repetir**. Entre líneas usa **Nueva línea**.\n\n**Obligatorio:** al menos una línea **Crear variable** y un **Repetir** (`for`).',
+          'Build the program **from the palette only**. Follow the **block canvas** and **Goal** panel: **Create variable** (with type) → **condition** → **Repeat**. Use **New line** between lines.\n\n**Required:** at least one **Create variable** line and a **Repeat** (`for`).',
         ),
-        introducesConcept: 'console',
-        goalSummary: L(
-          'Objetivo: const tipado → if → for',
-          'Goal: typed const → if → for',
-        ),
+        introducesConcept: 'variable',
+        requiredConcepts: [...requiredConceptsForLanguage('typescript')],
+        canvasLienzo: buildBeginnerBlockBridgeCanvas('typescript', 3),
+        goalSummary: blockAnchoredPaletteGoal('typescript'),
         previewStripes: [
           { swatch: 'violet', caption: L('Tipo const', 'Typed const') },
           { swatch: 'amber', caption: L('Condición if', 'if branch') },
@@ -174,6 +169,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         lines: [
           {
             id: 't',
+            role: 'variable',
             snippet: L('const n: number = 3', 'const n: number = 3'),
             explain: L(
               'Anotas el **tipo** del valor.',
@@ -182,6 +178,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
           },
           {
             id: 'b',
+            role: 'if_branch',
             snippet: L('if (n > 0) { ... }', 'if (n > 0) { ... }'),
             explain: L(
               'La condición **if** usa ese dato.',
@@ -190,6 +187,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
           },
           {
             id: 'l',
+            role: 'repeat_loop',
             snippet: L('for (let i = 0; i < n; i++)', 'for (let i = 0; i < n; i++)'),
             explain: L(
               'El **for** repite con el mismo límite.',
@@ -208,14 +206,13 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-py',
         title: L('Bandera del flujo (Python)', 'Flow flag (Python)'),
         instruction: L(
-          'Monta el programa **solo con la paleta**: print → asignación → if. Entre líneas inserta **Nueva línea**. Al completar, el **lienzo** desbloquea la imagen y el **modal** el resumen a color.',
-          'Assemble the program **from the palette only**: print → assignment → if. Insert **New line** between lines. When done, the **canvas** unlocks the picture and the **modal** the color summary.',
+          'Monta el programa **solo con la paleta**. Sigue el **lienzo de bloques** y el panel **Objetivo**: **mostrar** (`print`) → **guardar un nombre** (variable) → **decidir** (`if`). Usa **Nueva línea** entre líneas.\n\n**Obligatorio:** una asignación (variable) y un **if** en tu programa.',
+          'Assemble the program **from the palette only**. Follow the **block canvas** and **Goal** panel: **show** (`print`) → **store a name** (variable) → **decide** (`if`). Use **New line** between lines.\n\n**Required:** an assignment (variable) and an **if** in your program.',
         ),
         introducesConcept: 'console',
-        goalSummary: L(
-          'Objetivo: print → pasos = … → if',
-          'Goal: print → steps = … → if',
-        ),
+        requiredConcepts: [...requiredConceptsForLanguage('python')],
+        canvasLienzo: buildBeginnerBlockBridgeCanvas('python', 4),
+        goalSummary: blockAnchoredPaletteGoal('python'),
         previewStripes: [
           { swatch: 'emerald', caption: L('print', 'print') },
           { swatch: 'lime', caption: L('Variable', 'Variable') },
@@ -229,6 +226,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         lines: [
           {
             id: 'p',
+            role: 'console',
             snippet: L('print("Hola")', 'print("Hello")'),
             explain: L(
               '`print` muestra valores en la consola.',
@@ -237,6 +235,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
           },
           {
             id: 'v',
+            role: 'variable',
             snippet: L('pasos = 4', 'steps = 4'),
             explain: L(
               'Guardas un valor en un **nombre**.',
@@ -245,6 +244,7 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
           },
           {
             id: 'd',
+            role: 'if_branch',
             snippet: L('if pasos > 0:', 'if steps > 0:'),
             explain: L(
               'El **if** usa esa variable en la condición.',
@@ -263,14 +263,12 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-sql',
         title: L('Bandera de una consulta SQL', 'SQL query flag'),
         instruction: L(
-          'Compón el **SELECT** en tres líneas solo con la paleta: columnas, tabla, filtro. Usa **Nueva línea** después de cada parte. Al acertar, el **lienzo** muestra el embudo visual y el **modal** las franjas.',
-          'Compose the **SELECT** in three lines from the palette only: columns, table, filter. Use **New line** after each part. When correct, the **canvas** shows the funnel art and the **modal** the stripes.',
+          'Compón la consulta **solo con la paleta**. Sigue el **lienzo** y el panel **Objetivo**: **qué columnas** → **de qué tabla** → **qué filas**. Usa **Nueva línea** después de cada parte.',
+          'Compose the query **from the palette only**. Follow the **canvas** and **Goal** panel: **which columns** → **which table** → **which rows**. Use **New line** after each part.',
         ),
         introducesConcept: 'console',
-        goalSummary: L(
-          'Objetivo: SELECT → FROM → WHERE',
-          'Goal: SELECT → FROM → WHERE',
-        ),
+        canvasLienzo: buildBeginnerBlockBridgeCanvas('sql'),
+        goalSummary: blockAnchoredPaletteGoal('sql'),
         previewStripes: [
           { swatch: 'sky', caption: L('SELECT', 'SELECT') },
           { swatch: 'indigo', caption: L('FROM', 'FROM') },
@@ -317,14 +315,12 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-html',
         title: L('Bandera de capas HTML/CSS', 'HTML/CSS layer flag'),
         instruction: L(
-          'Construye tres líneas con la paleta: etiqueta, texto visible, regla CSS. **Nueva línea** entre cada una. Al acertar, el **lienzo** muestra las capas animadas y el **modal** las franjas.',
-          'Build three lines with the palette: tag, visible text, CSS rule. **New line** between each. When correct, the **canvas** shows the animated layers and the **modal** the stripes.',
+          'Construye el fragmento **solo con la paleta**. Sigue el **lienzo** y el panel **Objetivo**: **etiqueta** → **texto visible** → **color** (CSS). **Nueva línea** entre cada parte.',
+          'Build the snippet **from the palette only**. Follow the **canvas** and **Goal** panel: **tag** → **visible text** → **color** (CSS). **New line** between each part.',
         ),
         introducesConcept: 'console',
-        goalSummary: L(
-          'Objetivo: etiqueta div → texto → color',
-          'Goal: div tag → text → color',
-        ),
+        canvasLienzo: buildBeginnerBlockBridgeCanvas('html_css'),
+        goalSummary: blockAnchoredPaletteGoal('html_css'),
         previewStripes: [
           { swatch: 'slate', caption: L('HTML', 'HTML') },
           { swatch: 'amber', caption: L('Texto', 'Text') },
@@ -372,14 +368,12 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: `stripe-intro-${languageId}`,
         title: L('Bandera lógica del programa', 'Program logic flag'),
         instruction: L(
-          'Escribe el programa de ejemplo **solo con la paleta** (tres líneas + **Nueva línea** entre ellas). El teclado no añade letras; solo puedes borrar o mover el cursor.\n\nAl completar, el **lienzo** celebra el flujo y el **modal** resume tu código con franjas.',
-          'Write the sample program **from the palette only** (three lines + **New line** between them). The keyboard won’t insert letters; you can only delete or move the caret.\n\nWhen you finish, the **canvas** celebrates the flow and the **modal** summarizes your code with stripes.',
+          'Escribe el programa de ejemplo **solo con la paleta**. Sigue el **lienzo de bloques** y el panel **Objetivo** (tres pasos + **Nueva línea** entre líneas). El teclado no añade letras; solo puedes borrar o mover el cursor.\n\nAl completar, el **lienzo** celebra el flujo y el **modal** resume tu código con franjas.',
+          'Write the sample program **from the palette only**. Follow the **block canvas** and **Goal** panel (three steps + **New line** between lines). The keyboard won’t insert letters; you can only delete or move the caret.\n\nWhen you finish, the **canvas** celebrates the flow and the **modal** summarizes your code with stripes.',
         ),
         introducesConcept: 'console',
-        goalSummary: L(
-          'Objetivo: entrada → proceso → salida',
-          'Goal: input → process → output',
-        ),
+        canvasLienzo: buildBeginnerBlockBridgeCanvas(languageId),
+        goalSummary: blockAnchoredPaletteGoal(languageId),
         previewStripes: [
           { swatch: 'emerald', caption: L('Entrada', 'Input') },
           { swatch: 'amber', caption: L('Proceso', 'Process') },

@@ -1,6 +1,8 @@
 import type { LearningLanguageId } from '../app/learningTracks'
 
 import type { GuidedConceptKey, GuidedLesson } from './guidedLessonTypes'
+import { buildBeginnerBlockBridgeCanvas } from './beginnerBlockBridgeByLanguage'
+import { blockAnchoredPaletteGoal, requiredConceptsForLanguage } from './beginnerPaletteBlockGoals'
 import {
   BEGINNER_EXTENDED_HERO_WORDS_44,
   buildJavascriptBeginnerPaletteLessonsSlots1to8,
@@ -10,23 +12,42 @@ import { paletteIntroLesson } from './stripeIntroLessons'
 
 const L = (es: string, en: string) => ({ es, en })
 
+const BLOCK_FLOW_REF = L(
+  '\n\nMira el **lienzo de bloques** y el panel **Objetivo** (flujo en bloques, sin memorizar código).',
+  '\n\nSee the **block canvas** and **Goal** panel (block flow — no need to memorize code).',
+)
+
+const TS_MANDATORY = L(
+  '\n\n**Obligatorio:** al menos una línea **Crear variable** y un **Repetir** (`for`) en tu programa.',
+  '\n\n**Required:** at least one **Create variable** line and a **Repeat** (`for`) in your program.',
+)
+
+const PY_MANDATORY = L(
+  '\n\n**Obligatorio:** una asignación (variable) y un **if** en tu programa.',
+  '\n\n**Required:** an assignment (variable) and an **if** in your program.',
+)
+
+function pasosForSlot(slot: number): number {
+  return 2 + (slot % 5)
+}
+
 /** Hints for guided modules 2–5 in extended beginner tracks (any language). */
 const EXT_MOD_HINTS: ReadonlyArray<{ es: string; en: string }> = [
   {
-    es: 'Módulo 2 — refuerza **tres líneas** solo con la paleta.',
-    en: 'Module 2 — reinforce **three lines** from the palette only.',
+    es: 'Módulo 2 — mismo flujo en bloques; **solo tarjetas** de la paleta.',
+    en: 'Module 2 — same block flow; **palette cards** only.',
   },
   {
-    es: 'Módulo 3 — misma mecánica: **solo tarjetas**, orden fijo.',
-    en: 'Module 3 — same mechanic: **cards only**, fixed order.',
+    es: 'Módulo 3 — respeta el orden del **lienzo** y del panel **Objetivo**.',
+    en: 'Module 3 — follow the order on the **canvas** and **Goal** panel.',
   },
   {
     es: 'Módulo 4 — el **lienzo** y el **modal** celebran el programa correcto.',
     en: 'Module 4 — the **canvas** and **modal** celebrate the correct program.',
   },
   {
-    es: 'Módulo 5 — última tanda: mantén el ritmo de **tres líneas**.',
-    en: 'Module 5 — last stretch: keep the **three-line** rhythm.',
+    es: 'Módulo 5 — última tanda: mantén el ritmo del flujo en bloques.',
+    en: 'Module 5 — last stretch: keep the block-flow rhythm.',
   },
 ]
 
@@ -66,11 +87,14 @@ const DEFAULT_M1 = {
 } as const
 
 function buildTypeScriptExtended44(): GuidedLesson[] {
+  const required = [...requiredConceptsForLanguage('typescript')]
+  const blockGoal = blockAnchoredPaletteGoal('typescript')
   return Array.from({ length: 44 }, (_, slot) => {
     const { mod, lessonInMod } = segment(slot)
     const w = BEGINNER_EXTENDED_HERO_WORDS_44[slot]!
     const hint = mod === 1 ? TS_M1 : EXT_MOD_HINTS[mod - 2]!
     const nVal = (slot % 14) + 2
+    const pasos = pasosForSlot(slot)
     return paletteIntroLesson({
       id: `typescript-mod${mod}-pal-${lessonInMod}`,
       title: L(
@@ -78,14 +102,13 @@ function buildTypeScriptExtended44(): GuidedLesson[] {
         `Flow flag · ${w.en} (module ${mod})`,
       ),
       instruction: L(
-        `${hint.es}\n\nConstruye las tres líneas **solo desde la paleta**. Usa **Nueva línea** entre líneas. Objetivo: **const n: number = ${nVal}**, luego **if (n > 0)**, luego **for** con el mismo **n**.`,
-        `${hint.en}\n\nBuild the three lines **from the palette only**. Use **New line** between lines. Goal: **const n: number = ${nVal}**, then **if (n > 0)**, then **for** using the same **n**.`,
+        `${hint.es}\n\nConstruye el programa **solo desde la paleta**. Usa **Nueva línea** entre líneas.${TS_MANDATORY.es}${BLOCK_FLOW_REF.es}`,
+        `${hint.en}\n\nBuild the program **from the palette only**. Use **New line** between lines.${TS_MANDATORY.en}${BLOCK_FLOW_REF.en}`,
       ),
       introducesConcept: conceptAt(slot),
-      goalSummary: L(
-        `Tres líneas: const n = ${nVal} → if → for`,
-        `Three lines: const n = ${nVal} → if → for`,
-      ),
+      requiredConcepts: required,
+      canvasLienzo: buildBeginnerBlockBridgeCanvas('typescript', pasos),
+      goalSummary: blockGoal,
       previewStripes: [
         { swatch: 'violet', caption: L('Tipo const', 'Typed const') },
         { swatch: 'amber', caption: L('Condición if', 'if branch') },
@@ -99,16 +122,19 @@ function buildTypeScriptExtended44(): GuidedLesson[] {
       lines: [
         {
           id: 't',
+          role: 'variable',
           snippet: L(`const n: number = ${nVal}`, `const n: number = ${nVal}`),
           explain: L('Anotas el **tipo** del valor.', 'You annotate the value **type**.'),
         },
         {
           id: 'b',
+          role: 'if_branch',
           snippet: L('if (n > 0) { ... }', 'if (n > 0) { ... }'),
           explain: L('La condición **if** usa ese dato.', 'The **if** condition uses that data.'),
         },
         {
           id: 'l',
+          role: 'repeat_loop',
           snippet: L('for (let i = 0; i < n; i++)', 'for (let i = 0; i < n; i++)'),
           explain: L('El **for** repite con el mismo límite.', 'The **for** repeats with the same bound.'),
         },
@@ -122,11 +148,14 @@ function buildTypeScriptExtended44(): GuidedLesson[] {
 }
 
 function buildPythonExtended44(): GuidedLesson[] {
+  const required = [...requiredConceptsForLanguage('python')]
+  const blockGoal = blockAnchoredPaletteGoal('python')
   return Array.from({ length: 44 }, (_, slot) => {
     const { mod, lessonInMod } = segment(slot)
     const w = BEGINNER_EXTENDED_HERO_WORDS_44[slot]!
     const hint = mod === 1 ? PY_M1 : EXT_MOD_HINTS[mod - 2]!
     const val = (slot % 6) + 2
+    const pasos = pasosForSlot(slot)
     return paletteIntroLesson({
       id: `python-mod${mod}-pal-${lessonInMod}`,
       title: L(
@@ -134,14 +163,13 @@ function buildPythonExtended44(): GuidedLesson[] {
         `Flow flag · ${w.en} (module ${mod})`,
       ),
       instruction: L(
-        `${hint.es}\n\nMonta **print**, asignación e **if** solo con la paleta. **Nueva línea** entre líneas. Objetivo: imprimir **${w.es}**, luego **pasos = ${val}**, luego **if pasos > 0:**.`,
-        `${hint.en}\n\nAssemble **print**, assignment, and **if** from the palette only. **New line** between lines. Goal: print **${w.en}**, then **steps = ${val}**, then **if steps > 0:**.`,
+        `${hint.es}\n\nMonta el programa solo con la paleta. **Nueva línea** entre líneas.${PY_MANDATORY.es}${BLOCK_FLOW_REF.es} La palabra del lienzo va en el **print**.`,
+        `${hint.en}\n\nAssemble the program from the palette only. **New line** between lines.${PY_MANDATORY.en}${BLOCK_FLOW_REF.en} The canvas word goes in **print**.`,
       ),
       introducesConcept: conceptAt(slot),
-      goalSummary: L(
-        `Tres líneas: print("${w.es}") → pasos = ${val} → if`,
-        `Three lines: print("${w.en}") → steps = ${val} → if`,
-      ),
+      requiredConcepts: required,
+      canvasLienzo: buildBeginnerBlockBridgeCanvas('python', pasos),
+      goalSummary: blockGoal,
       previewStripes: [
         { swatch: 'emerald', caption: L('print', 'print') },
         { swatch: 'lime', caption: L('Variable', 'Variable') },
@@ -155,16 +183,19 @@ function buildPythonExtended44(): GuidedLesson[] {
       lines: [
         {
           id: 'p',
+          role: 'console',
           snippet: L(`print("${w.es}")`, `print("${w.en}")`),
           explain: L('`print` muestra valores en la consola.', '`print` shows values in the console.'),
         },
         {
           id: 'v',
+          role: 'variable',
           snippet: L(`pasos = ${val}`, `steps = ${val}`),
           explain: L('Guardas un valor en un **nombre**.', 'You store a value in a **name**.'),
         },
         {
           id: 'd',
+          role: 'if_branch',
           snippet: L('if pasos > 0:', 'if steps > 0:'),
           explain: L('El **if** usa esa variable.', '**if** uses that variable.'),
         },
@@ -178,6 +209,7 @@ function buildPythonExtended44(): GuidedLesson[] {
 }
 
 function buildSqlExtended44(): GuidedLesson[] {
+  const blockGoal = blockAnchoredPaletteGoal('sql')
   return Array.from({ length: 44 }, (_, slot) => {
     const { mod, lessonInMod } = segment(slot)
     const w = BEGINNER_EXTENDED_HERO_WORDS_44[slot]!
@@ -190,11 +222,12 @@ function buildSqlExtended44(): GuidedLesson[] {
         `SQL flag · ${w.en} (module ${mod})`,
       ),
       instruction: L(
-        `${hint.es}\n\nCompón **SELECT**, **FROM** y **WHERE** solo con la paleta. Filtro de ejemplo: edad > **${age}** / age > **${age}**.`,
-        `${hint.en}\n\nCompose **SELECT**, **FROM**, and **WHERE** from the palette only. Sample filter: age > **${age}**.`,
+        `${hint.es}\n\nCompón la consulta solo con la paleta.${BLOCK_FLOW_REF.es}`,
+        `${hint.en}\n\nCompose the query from the palette only.${BLOCK_FLOW_REF.en}`,
       ),
       introducesConcept: conceptAt(slot),
-      goalSummary: L('Objetivo: SELECT → FROM → WHERE', 'Goal: SELECT → FROM → WHERE'),
+      canvasLienzo: buildBeginnerBlockBridgeCanvas('sql'),
+      goalSummary: blockGoal,
       previewStripes: [
         { swatch: 'sky', caption: L('SELECT', 'SELECT') },
         { swatch: 'indigo', caption: L('FROM', 'FROM') },
@@ -233,6 +266,7 @@ const HTML_COLORS_ES = ['rojo', 'azul', 'verde', 'naranja', 'violeta'] as const
 const HTML_COLORS_EN = ['red', 'blue', 'green', 'orange', 'violet'] as const
 
 function buildHtmlCssExtended44(): GuidedLesson[] {
+  const blockGoal = blockAnchoredPaletteGoal('html_css')
   return Array.from({ length: 44 }, (_, slot) => {
     const { mod, lessonInMod } = segment(slot)
     const w = BEGINNER_EXTENDED_HERO_WORDS_44[slot]!
@@ -247,14 +281,12 @@ function buildHtmlCssExtended44(): GuidedLesson[] {
         `HTML/CSS flag · ${w.en} (module ${mod})`,
       ),
       instruction: L(
-        `${hint.es}\n\nTres líneas: **<div>**, texto **${w.es}**, regla **color: ${colorEs};**. Usa **Nueva línea** entre líneas.`,
-        `${hint.en}\n\nThree lines: **<div>**, text **${w.en}**, rule **color: ${colorEn};**. Use **New line** between lines.`,
+        `${hint.es}\n\nArma las capas solo con la paleta. El texto visible usa la palabra del lienzo (**${w.es}**).${BLOCK_FLOW_REF.es}`,
+        `${hint.en}\n\nBuild the layers from the palette only. Visible text uses the canvas word (**${w.en}**).${BLOCK_FLOW_REF.en}`,
       ),
       introducesConcept: conceptAt(slot),
-      goalSummary: L(
-        `Objetivo: div → ${w.es} → color ${colorEs}`,
-        `Goal: div → ${w.en} → color ${colorEn}`,
-      ),
+      canvasLienzo: buildBeginnerBlockBridgeCanvas('html_css'),
+      goalSummary: blockGoal,
       previewStripes: [
         { swatch: 'slate', caption: L('HTML', 'HTML') },
         { swatch: 'amber', caption: L('Texto', 'Text') },
@@ -278,7 +310,7 @@ function buildHtmlCssExtended44(): GuidedLesson[] {
         },
         {
           id: 'c',
-          snippet: L(`color: ${colorEn};`, `color: ${colorEn};`),
+          snippet: L(`color: ${colorEs};`, `color: ${colorEn};`),
           explain: L('Regla **color** para el texto.', '**color** rule for the text.'),
         },
       ],
@@ -291,6 +323,7 @@ function buildHtmlCssExtended44(): GuidedLesson[] {
 }
 
 function buildDefaultPipeline44(languageId: LearningLanguageId): GuidedLesson[] {
+  const blockGoal = blockAnchoredPaletteGoal(languageId)
   return Array.from({ length: 44 }, (_, slot) => {
     const { mod, lessonInMod } = segment(slot)
     const w = BEGINNER_EXTENDED_HERO_WORDS_44[slot]!
@@ -302,11 +335,12 @@ function buildDefaultPipeline44(languageId: LearningLanguageId): GuidedLesson[] 
         `Program flag · ${w.en} (module ${mod})`,
       ),
       instruction: L(
-        `${hint.es}\n\nEscribe el programa de ejemplo **solo con la paleta** (tres líneas + **Nueva línea** entre ellas). El **lienzo** y el **modal** resumen el flujo.`,
-        `${hint.en}\n\nWrite the sample program **from the palette only** (three lines + **New line** between them). The **canvas** and **modal** summarize the flow.`,
+        `${hint.es}\n\nEscribe el programa de ejemplo **solo con la paleta**.${BLOCK_FLOW_REF.es}`,
+        `${hint.en}\n\nWrite the sample program **from the palette only**.${BLOCK_FLOW_REF.en}`,
       ),
       introducesConcept: conceptAt(slot),
-      goalSummary: L('Objetivo: entrada → proceso → salida', 'Goal: input → process → output'),
+      canvasLienzo: buildBeginnerBlockBridgeCanvas(languageId),
+      goalSummary: blockGoal,
       previewStripes: [
         { swatch: 'emerald', caption: L('Entrada', 'Input') },
         { swatch: 'amber', caption: L('Proceso', 'Process') },

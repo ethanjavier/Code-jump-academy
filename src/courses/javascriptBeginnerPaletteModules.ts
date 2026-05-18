@@ -4,10 +4,9 @@ import type {
   PaletteCodePieceRole,
   PaletteCodeResultStripe,
 } from './guidedLessonTypes'
-import {
-  buildJsBeginnerBlockBridgeCanvas,
-  JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS,
-} from './jsBeginnerBlockBridge'
+import { blockAnchoredPaletteGoal } from './beginnerPaletteBlockGoals'
+import { buildBeginnerBlockBridgeCanvas } from './beginnerBlockBridgeByLanguage'
+import { JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS } from './jsBeginnerBlockBridge'
 import { paletteIntroLesson } from './stripeIntroLessons'
 
 const L = (es: string, en: string) => ({ es, en })
@@ -285,7 +284,6 @@ function buildJavascriptBeginnerPaletteLesson(
   const hint = mod === 1 ? MODULE_1_HINT : MODULE_HINTS[mod - 2]!
   const constCount = constCountForSlot(globalSlot)
   const pasos = pasosValue(globalSlot)
-  const totalLines = constCount + 3
   const orderHint = orderHintLabels(constCount)
 
   const constLines = buildJsConstChainLines(constCount, pair, pasos)
@@ -311,12 +309,7 @@ function buildJavascriptBeginnerPaletteLesson(
   const mandatoryEn =
     '\n\n**Required:** at least one **Create variable** line (`const`) and a **Repeat** (`for`) — the checker will not accept your program without them.'
 
-  const objectiveEs = `Objetivo: **${constCount}** variable${constCount === 1 ? '' : 's'} (**${CONST_STEP_LABELS.slice(0, constCount).join(', ')}**), luego **console.log(mensaje)**, **if** y **for** — **${totalLines} líneas** en total. El lienzo muestra **${wEs}** en **mensaje**.`
-
-  const objectiveEn = `Goal: **${constCount}** variable${constCount === 1 ? '' : 's'} (**${CONST_STEP_LABELS.slice(0, constCount).join(', ')}**), then **console.log(mensaje)**, **if**, and **for** — **${totalLines} lines** total. The canvas shows **${wEn}** in **mensaje**.`
-
-  const goalEs = `${constCount} const + console + if + for (${totalLines} líneas)`
-  const goalEn = `${constCount} const + console + if + for (${totalLines} lines)`
+  const blockGoal = blockAnchoredPaletteGoal('javascript')
 
   return paletteIntroLesson({
     id: `javascript-mod${mod}-pal-${lessonInMod}`,
@@ -325,13 +318,13 @@ function buildJavascriptBeginnerPaletteLesson(
       `Flow flag · ${wEn} (module ${mod})`,
     ),
     instruction: L(
-      `${hint.es}\n\nArma el programa **solo con la paleta**: **${constCount}** líneas **const** en orden, luego **console**, **if** y **for**. Usa **Nueva línea** entre líneas.${depNoteEs}${mandatoryEs}\n\n${objectiveEs}`,
-      `${hint.en}\n\nBuild the program **from the palette only**: **${constCount}** **const** lines in order, then **console**, **if**, and **for**. Use **New line** between lines.${depNoteEn}${mandatoryEn}\n\n${objectiveEn}`,
+      `${hint.es}\n\nArma el programa **solo con la paleta**. Usa **Nueva línea** entre líneas.${depNoteEs}${mandatoryEs}\n\nMira el **lienzo de bloques** y el panel **Objetivo**: ahí está el flujo (sin copiar código de memoria). La palabra del lienzo va en **mensaje**.`,
+      `${hint.en}\n\nBuild the program **from the palette only**. Use **New line** between lines.${depNoteEn}${mandatoryEn}\n\nSee the **block canvas** and **Goal** panel for the flow (no need to memorize code). The canvas word goes in **mensaje**.`,
     ),
     introducesConcept: introducesConceptAt(globalSlot, mod, lessonInMod),
     requiredConcepts: [...JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS],
-    canvasLienzo: buildJsBeginnerBlockBridgeCanvas(pasos),
-    goalSummary: L(goalEs, goalEn),
+    canvasLienzo: buildBeginnerBlockBridgeCanvas('javascript', pasos),
+    goalSummary: blockGoal,
     previewStripes: buildPreviewStripes(constCount),
     canvasHero: {
       mode: 'greeting',

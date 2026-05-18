@@ -55,7 +55,7 @@ function PaletteChip({
   disabled: boolean
   onPick: (entry: LessonPaletteEntry) => void
 }) {
-  const { locale, t } = useI18n()
+  const { locale } = useI18n()
 
   const chipLabel = () => {
     const raw = localized(entry.insertText, locale)

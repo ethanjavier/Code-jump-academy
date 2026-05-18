@@ -232,6 +232,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.expectedFragments': 'Your output should include:',
     'guided.expectFragmentsExplainer':
       'After Run, we read everything in the output box together with any error text. The fragments below are your checklist: for Check output to pass, each fragment must appear somewhere in that combined text (unless the lesson says otherwise). Later lessons often add more fragments to the list as the goal grows.',
+    'guided.paletteBlockGoalExplainer':
+      'Same ideas as the block canvas on the left — order the palette cards to match this flow (no need to memorize code).',
     'guided.paletteSnippetsExplainer':
       'The snippets below are the only pieces you can insert from the palette. Tap cards to build your program line by line until it matches the goal when you check. Longer lessons add more rows here as new names, literals, or lines appear.',
     'guided.goalOrderLinesExplainer':
@@ -626,6 +628,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.expectedFragments': 'Tu salida debe incluir:',
     'guided.expectFragmentsExplainer':
       'Después de Ejecutar, leemos todo lo que aparece en la caja de salida junto con el texto de error, si lo hay. Los fragmentos de abajo son tu lista: para que Comprobar salida funcione, cada fragmento debe aparecer en algún sitio de ese texto combinado (salvo que la lección diga otra cosa). En lecciones posteriores suele haber más fragmentos en la lista a medida que el objetivo crece.',
+    'guided.paletteBlockGoalExplainer':
+      'Las mismas ideas que el lienzo de bloques a la izquierda: ordena las tarjetas de la paleta siguiendo ese flujo (no hace falta memorizar código).',
     'guided.paletteSnippetsExplainer':
       'Los fragmentos de abajo son las únicas piezas que puedes insertar desde la paleta. Pulsa las tarjetas y arma tu programa línea a línea hasta que coincida con el objetivo al comprobar. En lecciones más largas verás más filas aquí cuando entren nombres, literales o líneas nuevas.',
     'guided.goalOrderLinesExplainer':
