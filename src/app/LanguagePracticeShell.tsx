@@ -8,7 +8,6 @@ import { getGuidedCourse, hasGuidedCourse } from '../courses/courseRegistry'
 import {
   GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL,
   GUIDED_BEGINNER_LESSONS_PER_MODULE,
-  GUIDED_LESSON_TARGET,
 } from '../courses/guidedLessonPadding'
 import { useI18n } from '../i18n/I18nContext'
 import { GuidedLessonRunner } from './guidedLesson/GuidedLessonRunner'
@@ -280,8 +279,6 @@ export function LanguagePracticeShell({
   const [beginnerGuidedModuleByLang, setBeginnerGuidedModuleByLang] = useState<
     Partial<Record<LearningLanguageId, number | null>>
   >({})
-  /** JavaScript Advanced: lesson buttons stay hidden until the learner expands the list. */
-  const [javascriptAdvancedGuidedOpen, setJavascriptAdvancedGuidedOpen] = useState(false)
   const [trackModes, setTrackModes] = useState<Partial<Record<LearningLanguageId, PracticeTrackMode>>>(
     () => boot.trackModes,
   )
@@ -297,7 +294,6 @@ export function LanguagePracticeShell({
 
   const setTrackMode = (lang: LearningLanguageId, mode: PracticeTrackMode) => {
     setBeginnerGuidedModuleByLang((prev) => ({ ...prev, [lang]: null }))
-    if (lang === 'javascript') setJavascriptAdvancedGuidedOpen(false)
     saveTrackPracticeMode(lang, mode)
     setTrackModes((prev) => ({ ...prev, [lang]: mode }))
   }
@@ -628,13 +624,8 @@ export function LanguagePracticeShell({
                     const Icon = TRACK_ICONS[lang]
                     const guidedCourse = getGuidedCourse(lang, modeFor(lang))
                     const guidedCount = guidedCourse?.lessons.length ?? 0
-                    const extendedBeginnerGuided =
-                      modeFor(lang) === 'beginner' &&
+                    const guidedModulePicker =
                       guidedCount === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
-                    const javascriptAdvancedNineStep =
-                      lang === 'javascript' &&
-                      modeFor(lang) === 'advanced' &&
-                      guidedCount === GUIDED_LESSON_TARGET
                     const openGuidedModule = beginnerGuidedModuleByLang[lang] ?? null
                     return (
                       <div
@@ -674,15 +665,11 @@ export function LanguagePracticeShell({
                           <p className="font-display text-xs font-bold uppercase tracking-wide text-amber-200/95">
                             {t('guided.courseSection')}
                           </p>
-                          <p className="mt-2 text-sm text-slate-400">
-                            {extendedBeginnerGuided
-                              ? t('guided.extendedModuleBlurb')
-                              : javascriptAdvancedNineStep
-                                ? t('guided.advancedJsModuleBlurb')
-                                : t('guided.courseBlurb')}
-                          </p>
+                          {!guidedModulePicker ? (
+                            <p className="mt-2 text-sm text-slate-400">{t('guided.courseBlurb')}</p>
+                          ) : null}
                           {hasGuidedCourse(lang) && guidedCount > 0 ? (
-                            extendedBeginnerGuided ? (
+                            guidedModulePicker ? (
                               <div className="mt-4 space-y-4">
                                 {openGuidedModule === null ? (
                                   <div className="flex flex-wrap gap-2">
@@ -714,10 +701,20 @@ export function LanguagePracticeShell({
                                       {t('guided.extendedLessonHeading')}
                                     </p>
                                     <div className="flex flex-wrap gap-2">
-                                      {Array.from({ length: GUIDED_BEGINNER_LESSONS_PER_MODULE }, (_, i) => {
-                                        const idx =
-                                          openGuidedModule * GUIDED_BEGINNER_LESSONS_PER_MODULE + i
-                                        return (
+                                      {(() => {
+                                        const slots = Array.from(
+                                          { length: GUIDED_BEGINNER_LESSONS_PER_MODULE },
+                                          (_, i) =>
+                                            openGuidedModule * GUIDED_BEGINNER_LESSONS_PER_MODULE + i,
+                                        ).filter((idx) => idx < guidedCount)
+                                        if (slots.length === 0) {
+                                          return (
+                                            <p className="text-sm text-slate-500">
+                                              {t('guided.moduleNoLessonsYet')}
+                                            </p>
+                                          )
+                                        }
+                                        return slots.map((idx) => (
                                           <Button
                                             key={`${lang}-guided-${idx}`}
                                             type="primary"
@@ -726,45 +723,8 @@ export function LanguagePracticeShell({
                                           >
                                             {t('guided.lessonButton', { num: String(idx + 1) })}
                                           </Button>
-                                        )
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : javascriptAdvancedNineStep ? (
-                              <div className="mt-4 space-y-3">
-                                {!javascriptAdvancedGuidedOpen ? (
-                                  <Button
-                                    type="primary"
-                                    className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
-                                    onClick={() => setJavascriptAdvancedGuidedOpen(true)}
-                                  >
-                                    {t('guided.advancedJsShowNine')}
-                                  </Button>
-                                ) : (
-                                  <div className="space-y-3">
-                                    <Button
-                                      type="link"
-                                      className="h-auto p-0 font-display text-amber-200/90 hover:!text-white"
-                                      onClick={() => setJavascriptAdvancedGuidedOpen(false)}
-                                    >
-                                      {t('guided.advancedJsHideNine')}
-                                    </Button>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-100/80">
-                                      {t('guided.advancedJsLessonHeading')}
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {Array.from({ length: guidedCount }, (_, i) => (
-                                        <Button
-                                          key={`${lang}-guided-${i}`}
-                                          type="primary"
-                                          className="rounded-xl border-0 bg-gradient-to-r from-amber-600 to-orange-600 font-display font-semibold text-white shadow-md hover:!from-amber-500 hover:!to-orange-500"
-                                          onClick={() => setGuidedSession({ lang, lessonIndex: i })}
-                                        >
-                                          {t('guided.lessonButton', { num: String(i + 1) })}
-                                        </Button>
-                                      ))}
+                                        ))
+                                      })()}
                                     </div>
                                   </div>
                                 )}

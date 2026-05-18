@@ -1,6 +1,8 @@
+import type { PracticeTrackMode } from '../app/learningPreferences'
 import { PRACTICE_MODULE_COUNT } from '../app/languageQuizzes'
 import type { GuidedCourse, GuidedLesson, Localized } from './guidedLessonTypes'
 import { buildBeginnerExtendedPaletteLessons } from './beginnerExtendedPaletteByLanguage'
+import { buildAdvancedExtendedOrderLinesLessons } from './advancedExtendedOrderLinesByLanguage'
 import { sortGuidedLessonsForBeginnerSpine } from './guidedLessonCanonicalOrder'
 import { introStripeLesson } from './stripeIntroLessons'
 
@@ -25,6 +27,7 @@ export const JAVASCRIPT_BEGINNER_GUIDED_LESSON_TOTAL = GUIDED_BEGINNER_EXTENDED_
 export type PadGuidedCourseOptions = {
   /** When set, overrides {@link GUIDED_LESSON_TARGET} (trim or pad to this length). */
   lessonTarget?: number
+  practiceMode?: PracticeTrackMode
 }
 
 /** Universal filler lessons when a track has fewer than {@link GUIDED_LESSON_TARGET} authored lessons. */
@@ -187,9 +190,14 @@ const PAD_POOL: Omit<GuidedLesson, 'id'>[] = [
 
 export function padGuidedCourse(course: GuidedCourse, opts?: PadGuidedCourseOptions): GuidedCourse {
   const target = opts?.lessonTarget ?? GUIDED_LESSON_TARGET
+  const practiceMode = opts?.practiceMode
+  const advancedExtended =
+    target === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL && practiceMode === 'advanced'
+
   const intro = introStripeLesson(course.languageId)
   const tail = sortGuidedLessonsForBeginnerSpine(course.lessons.filter((l) => l.id !== intro.id))
-  let lessons = [intro, ...tail]
+  let lessons: GuidedLesson[] = advancedExtended ? [...tail] : [intro, ...tail]
+
   if (lessons.length > target) {
     lessons = lessons.slice(0, target)
   }
@@ -207,7 +215,11 @@ export function padGuidedCourse(course: GuidedCourse, opts?: PadGuidedCourseOpti
     target === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL &&
     lessons.length === GUIDED_BEGINNER_EXTENDED_LESSON_TOTAL
   ) {
-    lessons = [lessons[0]!, ...buildBeginnerExtendedPaletteLessons(course.languageId)]
+    if (advancedExtended) {
+      lessons = buildAdvancedExtendedOrderLinesLessons(course.languageId)
+    } else {
+      lessons = [lessons[0]!, ...buildBeginnerExtendedPaletteLessons(course.languageId)]
+    }
   }
   return { ...course, lessons }
 }

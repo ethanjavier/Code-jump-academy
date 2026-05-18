@@ -28,12 +28,17 @@ import { CONCEPT_EXPLANATIONS } from '../../courses/conceptExplanations'
 import { resolveCanvasLienzo } from '../../courses/guidedCanvasResolve'
 import { getGuidedCourse } from '../../courses/courseRegistry'
 import type {
-  GuidedCanvasRow,
+  GuidedConceptKey,
   GuidedExercise,
   GuidedLesson,
   Localized,
   StripePiece,
 } from '../../courses/guidedLessonTypes'
+import {
+  draftHasConcept,
+  draftHasVariableDecl,
+  missingRequiredConcepts,
+} from '../../courses/paletteCodeConceptCheck'
 import { STRIPE_SWATCH_BG } from '../../courses/stripeSwatch'
 import { celebrateWin } from '../celebrate'
 import { iconStroke } from '../icons'
@@ -43,7 +48,11 @@ import { useI18n } from '../../i18n/I18nContext'
 import { localized } from '../languageQuizzes'
 import type { PracticeTrackMode } from '../learningPreferences'
 import { GuidedCanvasLienzo } from '../GuidedCanvasLienzo'
-import { LanguageAnalogPalette, LessonInsertPalette } from '../LanguageAnalogPalette'
+import {
+  LanguageAnalogPalette,
+  LessonInsertPalette,
+  type LessonPaletteEntry,
+} from '../LanguageAnalogPalette'
 import { PaletteCodeCanvasHeroBlock } from './PaletteCodeCanvasHero'
 import {
   GuidedReorderBandCard,
@@ -111,6 +120,18 @@ function includesAll(output: string, parts: string[]): boolean {
 
 function normalizePaletteCodeText(s: string): string {
   return s.replace(/\r\n/g, '\n').trim()
+}
+
+function paletteMissingConceptMessage(
+  missing: readonly GuidedConceptKey[],
+  t: (key: string) => string,
+): string {
+  const needsVar = missing.includes('variable')
+  const needsRepeat = missing.includes('repeat_loop')
+  if (needsVar && needsRepeat) return t('guided.paletteMissingBoth')
+  if (needsVar) return t('guided.paletteMissingVariable')
+  if (needsRepeat) return t('guided.paletteMissingRepeat')
+  return t('guided.tryReorder')
 }
 
 function paletteCodeKeyboardGuard(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -293,7 +314,6 @@ type GuidedToolsCardProps = {
   lesson: GuidedLesson
   exercise: GuidedExercise
   expectParts: string[]
-  canvasRows: GuidedCanvasRow[]
   won: boolean
   hasNextLesson?: boolean
   onNextLesson?: () => void
@@ -302,6 +322,9 @@ type GuidedToolsCardProps = {
   beginnerShell?: boolean
   /** Insert palette snippet into the code editor or scratch pad (center column). */
   onInsertPaletteSnippet?: (text: string) => void
+  /** Live draft for mandatory-concept checklist (paletteCode). */
+  paletteCodeDraft?: string
+  isPaletteEntryDisabled?: (entry: LessonPaletteEntry) => boolean
 }
 
 /** Wraps palette-style content — mirrors spacing around draggable blocks in `PuzzleWorkspace`. */
@@ -406,34 +429,81 @@ function GuidedLessonToolsCard({
   lesson,
   exercise,
   expectParts,
-  canvasRows,
   won,
   hasNextLesson,
   onNextLesson,
   onBack,
   beginnerShell = false,
   onInsertPaletteSnippet,
+  paletteCodeDraft = '',
+  isPaletteEntryDisabled,
 }: GuidedToolsCardProps) {
   const { t, locale } = useI18n()
   /** Advanced: language palette only inserts into scratch/run editor — hide for runCode (Parsons lines). */
   const analogPaletteDisabled =
     won || (!beginnerShell && exercise.type !== 'paletteCode')
 
-  const conceptAlert =
-    lesson.introducesConcept ? (
-      <Alert
-        type="info"
-        showIcon
-        className="border-sky-500/35 bg-sky-950/35 text-sky-50 [&_.ant-alert-message]:font-display [&_.ant-alert-message]:font-semibold [&_.ant-alert-message]:text-sky-100"
-        message={t('guided.newIdea')}
-        description={
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
-            {locale === 'es'
-              ? CONCEPT_EXPLANATIONS[lesson.introducesConcept].es
-              : CONCEPT_EXPLANATIONS[lesson.introducesConcept].en}
-          </p>
-        }
-      />
+  const requiredConcepts =
+    exercise.type === 'paletteCode' && exercise.requiredConcepts?.length
+      ? exercise.requiredConcepts
+      : lesson.introducesConcept
+        ? [lesson.introducesConcept]
+        : []
+
+  const normalizedPaletteDraft = normalizePaletteCodeText(paletteCodeDraft)
+
+  const conceptAlerts =
+    requiredConcepts.length > 0
+      ? requiredConcepts.map((concept) => (
+          <Alert
+            key={concept}
+            type="info"
+            showIcon
+            className="border-sky-500/35 bg-sky-950/35 text-sky-50 [&_.ant-alert-message]:font-display [&_.ant-alert-message]:font-semibold [&_.ant-alert-message]:text-sky-100"
+            message={t('guided.newIdea')}
+            description={
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                {locale === 'es'
+                  ? CONCEPT_EXPLANATIONS[concept].es
+                  : CONCEPT_EXPLANATIONS[concept].en}
+              </p>
+            }
+          />
+        ))
+      : null
+
+  const conceptChecklist =
+    exercise.type === 'paletteCode' && exercise.requiredConcepts?.length ? (
+      <motion.div
+        layout
+        className="mt-4 rounded-xl border border-violet-500/25 bg-violet-950/25 p-3 ring-1 ring-violet-500/15"
+      >
+        <p className="font-display text-[11px] font-semibold uppercase tracking-wide text-violet-200">
+          {t('guided.beforeYouCode')}
+        </p>
+        <ul className="mt-2 space-y-1.5 text-sm text-slate-200">
+          {exercise.requiredConcepts.includes('variable') ? (
+            <li className="flex items-center justify-between gap-2">
+              <span>{t('guided.conceptCheckVariable')}</span>
+              <Tag color={draftHasConcept(normalizedPaletteDraft, 'variable') ? 'success' : 'default'}>
+                {draftHasConcept(normalizedPaletteDraft, 'variable')
+                  ? t('guided.conceptCheckDone')
+                  : t('guided.conceptCheckPending')}
+              </Tag>
+            </li>
+          ) : null}
+          {exercise.requiredConcepts.includes('repeat_loop') ? (
+            <li className="flex items-center justify-between gap-2">
+              <span>{t('guided.conceptCheckRepeat')}</span>
+              <Tag color={draftHasConcept(normalizedPaletteDraft, 'repeat_loop') ? 'success' : 'default'}>
+                {draftHasConcept(normalizedPaletteDraft, 'repeat_loop')
+                  ? t('guided.conceptCheckDone')
+                  : t('guided.conceptCheckPending')}
+              </Tag>
+            </li>
+          ) : null}
+        </ul>
+      </motion.div>
     ) : null
 
   const pythonNote =
@@ -470,6 +540,7 @@ function GuidedLessonToolsCard({
                 entries={exercise.palette}
                 onInsertSnippet={onInsertPaletteSnippet}
                 disabled={won}
+                isEntryDisabled={isPaletteEntryDisabled}
               />
             ) : (
               <LanguageAnalogPalette
@@ -484,7 +555,8 @@ function GuidedLessonToolsCard({
               <GuidedLessonGoalPanel exercise={exercise} expectParts={expectParts} locale={locale} />
             </BlockPaletteSlot>
           </div>
-          {conceptAlert ? <div className="mt-4">{conceptAlert}</div> : null}
+          {conceptAlerts ? <div className="mt-4 space-y-3">{conceptAlerts}</div> : null}
+          {conceptChecklist}
           {pythonNote ? <div className="mt-4">{pythonNote}</div> : null}
         </div>
 
@@ -503,31 +575,7 @@ function GuidedLessonToolsCard({
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden pr-1">
-        <BlockPaletteSlot>
-          {exercise.type === 'paletteCode' ? (
-            <LessonInsertPalette
-              entries={exercise.palette}
-              onInsertSnippet={onInsertPaletteSnippet}
-              disabled={won}
-            />
-          ) : (
-            <LanguageAnalogPalette
-              lang={lang}
-              onInsertSnippet={onInsertPaletteSnippet}
-              disabled={analogPaletteDisabled}
-            />
-          )}
-        </BlockPaletteSlot>
-
-        {canvasRows.length > 0 ? (
-          <div className="rounded-xl border border-violet-500/25 bg-slate-950/45 p-3 ring-1 ring-violet-500/15">
-            <GuidedCanvasLienzo rows={canvasRows} />
-          </div>
-        ) : null}
-
         <GuidedLessonGoalPanel exercise={exercise} expectParts={expectParts} locale={locale} />
-
-        {conceptAlert}
 
         {pythonNote}
       </div>
@@ -573,6 +621,7 @@ export function GuidedLessonRunner({
   const [scratchDraft, setScratchDraft] = useState('')
   const [paletteCodeDraft, setPaletteCodeDraft] = useState('')
   const [paletteHint, setPaletteHint] = useState(false)
+  const [paletteHintMessage, setPaletteHintMessage] = useState<string | null>(null)
   const [paletteVisualModalOpen, setPaletteVisualModalOpen] = useState(false)
   const paletteModalOpenedForWinRef = useRef(false)
   const [runOutput, setRunOutput] = useState('')
@@ -613,6 +662,7 @@ export function GuidedLessonRunner({
     } else if (lesson.exercise.type === 'paletteCode') {
       setPaletteCodeDraft('')
       setPaletteHint(false)
+      setPaletteHintMessage(null)
     } else if (
       lesson.exercise.type === 'orderLines' ||
       lesson.exercise.type === 'stripeChallenge' ||
@@ -633,6 +683,7 @@ export function GuidedLessonRunner({
     paletteModalOpenedForWinRef.current = false
     setPaletteCodeDraft('')
     setPaletteHint(false)
+    setPaletteHintMessage(null)
     setWon(false)
     completionSent.current = false
   }, [])
@@ -678,6 +729,7 @@ export function GuidedLessonRunner({
     (snippet: string) => {
       if (won || !lesson || lesson.exercise.type !== 'paletteCode') return
       setPaletteHint(false)
+      setPaletteHintMessage(null)
       setPaletteCodeDraft((prev) => {
         const el = paletteCodeTextareaRef.current
         const typingHere = Boolean(el && document.activeElement === el)
@@ -739,6 +791,8 @@ export function GuidedLessonRunner({
   useEffect(() => {
     paletteModalOpenedForWinRef.current = false
     setPaletteVisualModalOpen(false)
+    setPaletteHint(false)
+    setPaletteHintMessage(null)
   }, [lesson?.id])
 
   useEffect(() => {
@@ -836,16 +890,46 @@ export function GuidedLessonRunner({
 
   const handleCheckPaletteCode = useCallback(() => {
     if (!lesson || lesson.exercise.type !== 'paletteCode') return
-    const want = normalizePaletteCodeText(localized(lesson.exercise.correctText, locale))
     const got = normalizePaletteCodeText(paletteCodeDraft)
+    const required = lesson.exercise.requiredConcepts ?? []
+    const missing = missingRequiredConcepts(got, required)
+    if (missing.length > 0) {
+      setPaletteHint(true)
+      setPaletteHintMessage(paletteMissingConceptMessage(missing, t))
+      return
+    }
+    const want = normalizePaletteCodeText(localized(lesson.exercise.correctText, locale))
     if (got === want) {
+      setPaletteHintMessage(null)
       setWon(true)
       celebrateWin()
       completeLesson()
     } else {
+      setPaletteHintMessage(null)
       setPaletteHint(true)
     }
-  }, [lesson, locale, paletteCodeDraft, completeLesson])
+  }, [lesson, locale, paletteCodeDraft, completeLesson, t])
+
+  const paletteDraftNormalized = useMemo(
+    () => normalizePaletteCodeText(paletteCodeDraft),
+    [paletteCodeDraft],
+  )
+
+  const paletteHasVariable = useMemo(
+    () => draftHasVariableDecl(paletteDraftNormalized),
+    [paletteDraftNormalized],
+  )
+
+  const isPaletteEntryDisabled = useCallback(
+    (entry: LessonPaletteEntry) => {
+      if (won) return true
+      if (paletteHasVariable) return false
+      const raw = localized(entry.insertText, locale)
+      if (raw === '\n') return false
+      return entry.role === 'console' || entry.role === 'if_branch' || entry.role === 'repeat_loop'
+    },
+    [won, paletteHasVariable, locale],
+  )
 
   const handleRunCode = useCallback(async () => {
     if (!lesson || lesson.exercise.type !== 'runCode') return
@@ -990,22 +1074,29 @@ export function GuidedLessonRunner({
               </div>
               <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/10 bg-slate-950/50 p-3 text-[12px] text-slate-200">
                 {exercise.type === 'paletteCode' && exercise.resultPreview?.length ? (
-                  <div className="flex min-h-[120px] flex-col items-center justify-center font-sans">
+                  <div className="flex min-h-[120px] flex-col gap-3 font-sans">
+                    {!won && canvasLienzoRows.length > 0 ? (
+                      <div className="min-h-0 shrink-0">
+                        <GuidedCanvasLienzo rows={canvasLienzoRows} />
+                      </div>
+                    ) : null}
                     {won && exercise.canvasHero ? (
-                      <PaletteCodeCanvasHeroBlock
-                        hero={exercise.canvasHero}
-                        firstLineLit
-                        won
-                      />
+                      <div className="flex flex-1 flex-col items-center justify-center">
+                        <PaletteCodeCanvasHeroBlock
+                          hero={exercise.canvasHero}
+                          firstLineLit
+                          won
+                        />
+                      </div>
                     ) : won ? (
                       <p className="max-w-sm text-center font-display text-base font-semibold text-emerald-300">
                         {t('guided.nice')}
                       </p>
-                    ) : (
+                    ) : !canvasLienzoRows.length ? (
                       <p className="max-w-sm text-center text-sm leading-relaxed text-slate-400">
                         {t('guided.paletteCodeCanvasAwait')}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 ) : exercise.type === 'paletteCode' ? (
                   <p className="text-sm leading-relaxed text-slate-500">{t('guided.paletteCodePreviewHint')}</p>
@@ -1125,7 +1216,7 @@ export function GuidedLessonRunner({
             ) : null}
             {isBeginnerLayout && exercise.type === 'paletteCode' && paletteHint ? (
               <p className="mb-3 shrink-0 rounded-xl border border-amber-500/35 bg-amber-950/30 px-3 py-2 text-sm text-amber-100">
-                {localized(exercise.wrongHint, locale)}
+                {paletteHintMessage ?? localized(exercise.wrongHint, locale)}
               </p>
             ) : null}
 
@@ -1543,13 +1634,14 @@ export function GuidedLessonRunner({
             lesson={lesson}
             exercise={exercise}
             expectParts={expectParts}
-            canvasRows={canvasLienzoRows}
             won={won}
             hasNextLesson={hasNextLesson}
             onNextLesson={onNextLesson}
             onBack={onBack}
             beginnerShell={isBeginnerLayout}
             onInsertPaletteSnippet={handlePaletteInsert}
+            paletteCodeDraft={paletteCodeDraft}
+            isPaletteEntryDisabled={isPaletteEntryDisabled}
           />
         </section>
       </main>

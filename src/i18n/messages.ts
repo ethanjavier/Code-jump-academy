@@ -144,17 +144,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.courseSection': 'Guided lessons',
     'guided.courseBlurb':
       'Instructions plus a practice step (reorder lines, quiz, or **run code** in the mini lab). When a **new idea** appears, we explain it and relate it to CodeJump blocks when it helps.',
-    'guided.jsBeginnerModuleBlurb':
-      'Choose a module first; each one opens **nine guided lessons** (JavaScript beginner track only).',
-    'guided.jsBeginnerLessonHeading': 'Nine lessons in this module',
-    'guided.extendedModuleBlurb':
-      'Choose a module first; each opens **nine guided lessons** in this track (Beginner layout matches the JavaScript experience).',
     'guided.extendedLessonHeading': 'Nine lessons in this module',
-    'guided.advancedJsModuleBlurb':
-      'In **Advanced** JavaScript, tap the button below to open the full list of **nine** guided lessons.',
-    'guided.advancedJsShowNine': 'Show all 9 lessons',
-    'guided.advancedJsHideNine': 'Hide lesson list',
-    'guided.advancedJsLessonHeading': 'Nine guided lessons',
+    'guided.moduleNoLessonsYet': 'No lessons in this module yet.',
     'guided.lessonButton': 'Lesson {{num}}',
     'guided.lessonMeta': 'Lesson {{current}} / {{total}}',
     'guided.newIdea': 'New idea — read this before coding',
@@ -174,6 +165,21 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.checkAnswer': 'Check answer',
     'guided.checkOutput': 'Check output',
     'guided.checkPaletteCode': 'Check program',
+    'guided.beforeYouCode': 'Before you code — required ideas',
+    'guided.conceptCheckVariable': 'Create variable (`const`)',
+    'guided.conceptCheckRepeat': 'Repeat (`for` loop)',
+    'guided.conceptCheckDone': 'done',
+    'guided.conceptCheckPending': 'still needed',
+    'guided.paletteMissingVariable':
+      'Your program must include at least one **Create variable** line: a `const name = …;` card from the palette.',
+    'guided.paletteMissingRepeat':
+      'Your program must include **Repeat**: add the `for` card from the palette (like the Repeat block on the canvas).',
+    'guided.paletteMissingBoth':
+      'You still need **Create variable** (`const`) and **Repeat** (`for`) in your program — use those palette sections first.',
+    'guided.paletteRoleVariable': 'Create variable',
+    'guided.paletteRoleConsole': 'Output',
+    'guided.paletteRoleIf': 'Condition',
+    'guided.paletteRoleRepeat': 'Repeat',
     'guided.paletteCodePreviewHint':
       'Your program appears in the center — insert lines only from the palette on the right.',
     'guided.paletteCodeEditorAria': 'Program built from palette snippets only',
@@ -527,17 +533,8 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.courseSection': 'Lecciones guiadas',
     'guided.courseBlurb':
       'Instrucciones + paso práctico (ordenar líneas, test rápido o **ejecutar código** en el mini laboratorio). Cuando hay una **idea nueva**, la explicamos y la relacionamos con los bloques de CodeJump cuando encaja.',
-    'guided.jsBeginnerModuleBlurb':
-      'Elige primero un módulo; dentro tendrás **nueve lecciones guiadas** (solo JavaScript en modo Principiante).',
-    'guided.jsBeginnerLessonHeading': 'Nueve lecciones en este módulo',
-    'guided.extendedModuleBlurb':
-      'Elige primero un módulo; dentro tendrás **nueve lecciones guiadas** en esta ruta (el modo Principiante replica la experiencia de JavaScript).',
     'guided.extendedLessonHeading': 'Nueve lecciones en este módulo',
-    'guided.advancedJsModuleBlurb':
-      'En **JavaScript avanzado**, pulsa el botón de abajo para ver las **nueve** lecciones guiadas.',
-    'guided.advancedJsShowNine': 'Ver las 9 lecciones',
-    'guided.advancedJsHideNine': 'Ocultar lista de lecciones',
-    'guided.advancedJsLessonHeading': 'Nueve lecciones guiadas',
+    'guided.moduleNoLessonsYet': 'Este módulo aún no tiene lecciones.',
     'guided.lessonButton': 'Lección {{num}}',
     'guided.lessonMeta': 'Lección {{current}} / {{total}}',
     'guided.newIdea': 'Idea nueva — léelo antes de programar',
@@ -558,6 +555,21 @@ export const messages: Record<Locale, MessageDict> = {
     'guided.checkAnswer': 'Comprobar respuesta',
     'guided.checkOutput': 'Comprobar salida',
     'guided.checkPaletteCode': 'Comprobar programa',
+    'guided.beforeYouCode': 'Antes de programar — ideas obligatorias',
+    'guided.conceptCheckVariable': 'Crear variable (`const`)',
+    'guided.conceptCheckRepeat': 'Repetir (bucle `for`)',
+    'guided.conceptCheckDone': 'listo',
+    'guided.conceptCheckPending': 'falta',
+    'guided.paletteMissingVariable':
+      'Tu programa debe incluir al menos una línea de **Crear variable**: una tarjeta `const nombre = …;` de la paleta.',
+    'guided.paletteMissingRepeat':
+      'Tu programa debe incluir **Repetir**: añade la tarjeta `for` de la paleta (como el bloque Repetir del lienzo).',
+    'guided.paletteMissingBoth':
+      'Aún faltan **Crear variable** (`const`) y **Repetir** (`for`) en tu programa — usa esas secciones de la paleta primero.',
+    'guided.paletteRoleVariable': 'Crear variable',
+    'guided.paletteRoleConsole': 'Salida',
+    'guided.paletteRoleIf': 'Condición',
+    'guided.paletteRoleRepeat': 'Repetir',
     'guided.paletteCodePreviewHint':
       'Tu programa va en el centro: monta las líneas solo con la paleta de la derecha.',
     'guided.paletteCodeEditorAria': 'Programa construido solo con fragmentos de la paleta',

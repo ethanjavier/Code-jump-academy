@@ -88,11 +88,15 @@ export type StripeChallengeExercise = {
   wrongHint: Localized
 }
 
+/** Palette card role — groups snippets and drives mandatory-concept checks. */
+export type PaletteCodePieceRole = 'variable' | 'console' | 'if_branch' | 'repeat_loop'
+
 /** Snippets-only coding: learner builds text using palette inserts; typing from keyboard is disabled in the runner. */
 export type PaletteCodePiece = {
   id: string
   insertText: Localized
   hint?: Localized
+  role?: PaletteCodePieceRole
 }
 
 /** One colored band in the live canvas / success modal (same order as lines in {@link PaletteCodeExercise.correctText}). */
@@ -147,6 +151,8 @@ export type PaletteCodeExercise = {
   resultPreview?: PaletteCodeResultStripe[]
   /** Optional giant canvas focal word — see {@link PaletteCodeCanvasHero}. */
   canvasHero?: PaletteCodeCanvasHero
+  /** Must appear in the draft before the exact solution is accepted. */
+  requiredConcepts?: GuidedConceptKey[]
 }
 
 export type GuidedExercise =

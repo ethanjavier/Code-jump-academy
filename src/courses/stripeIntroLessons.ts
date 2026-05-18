@@ -1,13 +1,19 @@
 import type { LearningLanguageId } from '../app/learningTracks'
 
 import type {
+  GuidedCanvasRow,
   GuidedConceptKey,
   GuidedLesson,
   Localized,
   PaletteCodeCanvasHero,
   PaletteCodeExercise,
+  PaletteCodePieceRole,
   PaletteCodeResultStripe,
 } from './guidedLessonTypes'
+import {
+  buildJsBeginnerBlockBridgeCanvas,
+  JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS,
+} from './jsBeginnerBlockBridge'
 
 const L = (es: string, en: string): Localized => ({ es, en })
 
@@ -17,19 +23,29 @@ export function paletteIntroLesson(opts: {
   title: Localized
   instruction: Localized
   introducesConcept: GuidedConceptKey
-  lines: Array<{ id: string; snippet: Localized; explain: Localized }>
+  lines: Array<{
+    id: string
+    snippet: Localized
+    explain: Localized
+    role?: PaletteCodePieceRole
+  }>
   wrongHint: Localized
   goalSummary: Localized
   /** Visual stripes for canvas + modal (same order as lines). */
   previewStripes: PaletteCodeResultStripe[]
   /** Large focal word on beginner canvas. */
   canvasHero?: PaletteCodeCanvasHero
+  /** Block-canvas rows (varDecl, Repetir…) shown during the lesson. */
+  canvasLienzo?: GuidedCanvasRow[]
+  /** Concepts that must appear in the draft before the solution is accepted. */
+  requiredConcepts?: GuidedConceptKey[]
 }): GuidedLesson {
   const palette = [
     ...opts.lines.map((line) => ({
       id: line.id,
       insertText: line.snippet,
       hint: line.explain,
+      ...(line.role ? { role: line.role } : {}),
     })),
     {
       id: 'nl',
@@ -47,12 +63,14 @@ export function paletteIntroLesson(opts: {
     goalSummary: opts.goalSummary,
     resultPreview: opts.previewStripes,
     ...(opts.canvasHero ? { canvasHero: opts.canvasHero } : {}),
+    ...(opts.requiredConcepts?.length ? { requiredConcepts: [...opts.requiredConcepts] } : {}),
   }
   return {
     id: opts.id,
     title: opts.title,
     instruction: opts.instruction,
     introducesConcept: opts.introducesConcept,
+    ...(opts.canvasLienzo?.length ? { canvasLienzo: opts.canvasLienzo } : {}),
     exercise,
   }
 }
@@ -65,15 +83,18 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         id: 'stripe-intro-js',
         title: L('Bandera del flujo (JavaScript)', 'Flow flag (JavaScript)'),
         instruction: L(
-          'Arma el mini programa **solo con la paleta**: cada tarjeta inserta código en el cursor. No escribas letras con el teclado (solo borrar o mover el cursor). Encadena **salida → condición → bucle** como tres líneas separadas con **Nueva línea** entre ellas.\n\nEn el **lienzo** aparecerá una imagen al completar el programa; el **modal** te muestra el flujo completo con colores.',
-          'Build the tiny program **from the palette only**: each card inserts code at the cursor (only delete or move the caret). Chain **output → condition → loop** as three lines separated with **New line** between them.\n\nThe **canvas** unlocks a picture when your program is correct; the **modal** shows the full color flow.',
+          'Arma el mini programa **solo con la paleta**: cada tarjeta inserta código en el cursor. No escribas letras con el teclado (solo borrar o mover el cursor). Empieza con **Crear variable** (**const saludo**), luego **salida**, **condición** y **Repetir** (`for`) — cuatro líneas con **Nueva línea** entre ellas.\n\n**Obligatorio:** tu programa debe incluir al menos un `const` y un `for`. Mira el lienzo de bloques arriba: **Crear variable** guarda el valor; **Repetir** lo usa varias veces.\n\nEn lecciones siguientes irás **sumando más variables** enlazadas. Al acertar, el **lienzo** celebra y el **modal** muestra el flujo con colores.',
+          'Build the tiny program **from the palette only**: each card inserts code at the cursor (only delete or move the caret). Start with **Create variable** (**const saludo**), then **output**, **condition**, and **Repeat** (`for`) — four lines with **New line** between them.\n\n**Required:** your program must include at least one `const` and one `for`. See the block canvas above: **Create variable** stores the value; **Repeat** uses it several times.\n\nLater lessons will **add more linked variables**. When correct, the **canvas** celebrates and the **modal** shows the color flow.',
         ),
-        introducesConcept: 'console',
+        introducesConcept: 'variable',
+        requiredConcepts: [...JS_BEGINNER_PALETTE_REQUIRED_CONCEPTS],
+        canvasLienzo: buildJsBeginnerBlockBridgeCanvas(3),
         goalSummary: L(
-          'Objetivo: tres líneas — console, luego if, luego for',
-          'Goal: three lines — console, then if, then for',
+          'Objetivo: cuatro líneas — const saludo, console(saludo), if, for',
+          'Goal: four lines — const saludo, console(saludo), if, for',
         ),
         previewStripes: [
+          { swatch: 'violet', caption: L('Variable const', 'const variable') },
           { swatch: 'emerald', caption: L('Salida console', 'Console out') },
           { swatch: 'amber', caption: L('Condición if', 'if branch') },
           { swatch: 'sky', caption: L('Bucle for', 'for loop') },
@@ -85,33 +106,45 @@ export function introStripeLesson(languageId: LearningLanguageId): GuidedLesson 
         },
         lines: [
           {
-            id: 'c',
-            snippet: L('console.log("Hola");', 'console.log("Hi");'),
+            id: 'v',
+            role: 'variable',
+            snippet: L('const saludo = "Hola";', 'const saludo = "Hi";'),
             explain: L(
-              'Manda texto a la **consola** del navegador.',
-              'Sends text to the browser **console**.',
+              'Primera línea: **Crear variable** — guardas el saludo con `const`.',
+              'First line: **Create variable** — store the greeting with `const`.',
+            ),
+          },
+          {
+            id: 'c',
+            role: 'console',
+            snippet: L('console.log(saludo);', 'console.log(saludo);'),
+            explain: L(
+              'Segunda línea: manda **saludo** a la consola del navegador.',
+              'Second line: send **saludo** to the browser console.',
             ),
           },
           {
             id: 'i',
+            role: 'if_branch',
             snippet: L('if (ok) { ... }', 'if (ok) { ... }'),
             explain: L(
-              'El **if** decide si entra un bloque.',
-              '**if** decides whether a block runs.',
+              'Tercera línea: el **if** decide si entra un bloque.',
+              'Third line: **if** decides whether a block runs.',
             ),
           },
           {
             id: 'f',
+            role: 'repeat_loop',
             snippet: L('for (let i = 0; ...)', 'for (let i = 0; ...)'),
             explain: L(
-              'El **for** repite un trozo varias veces.',
-              'A **for** repeats a chunk several times.',
+              'Cuarta línea: **Repetir** en código — el `for` repite un trozo.',
+              'Fourth line: **Repeat** in code — the `for` runs a chunk several times.',
             ),
           },
         ],
         wrongHint: L(
-          'Orden de líneas: primero console.log, luego if, luego for — usa “Nueva línea” entre líneas.',
-          'Line order: console.log first, then if, then for — use “New line” between lines.',
+          'Orden: const saludo, console.log(saludo), if, for — usa “Nueva línea” entre líneas.',
+          'Order: const saludo, console.log(saludo), if, for — use “New line” between lines.',
         ),
       })
 
